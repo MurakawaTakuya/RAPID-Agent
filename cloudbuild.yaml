@@ -30,6 +30,7 @@ steps:
       - "--platform"
       - "managed"
       - "--allow-unauthenticated"
+      - "--set-env-vars=DATABASE_URL=$_DATABASE_URL"
 
 images:
   - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/paper-agent:$COMMIT_SHA"
