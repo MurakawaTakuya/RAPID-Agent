@@ -1,5 +1,3 @@
-"use client";
-
 import AuthButton from "@/components/AuthButton";
 import Image from "next/image";
 import styles from "./page.module.scss";
