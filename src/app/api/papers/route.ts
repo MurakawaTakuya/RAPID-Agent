@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // TODO: Add security check (e.g., INTERNAL_API_KEY) to restrict access to internal systems only.
+  // const apiKey = request.headers.get('X-Internal-Secret');
+  // if (apiKey !== process.env.INTERNAL_API_KEY) { ... }
+
   try {
     const body = await request.json();
     const { url, title, abstract, authors, embedding } = body;
