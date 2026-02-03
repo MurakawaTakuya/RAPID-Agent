@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Misc
+*.md
+*.log
+.env*
+.DS_Store
+
+# Test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__

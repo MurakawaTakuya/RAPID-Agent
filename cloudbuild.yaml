@@ -1,0 +1,35 @@
+steps:
+  # Dockerイメージをビルド
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/paper-agent:$COMMIT_SHA"
+      - "."
+
+  # Artifact Registryにプッシュ
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/paper-agent:$COMMIT_SHA"
+
+  # Cloud Runにデプロイ
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "paper-agent"
+      - "--image"
+      - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/paper-agent:$COMMIT_SHA"
+      - "--region"
+      - "asia-northeast1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+
+images:
+  - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/paper-agent:$COMMIT_SHA"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
