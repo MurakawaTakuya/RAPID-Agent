@@ -37,9 +37,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+
+      if (user) {
+        try {
+          // トークン取得
+          const token = await user.getIdToken();
+
+          // ユーザー情報をDBに保存/更新
+          await fetch("/api/user", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              displayName: user.displayName,
+              photoUrl: user.photoURL,
+            }),
+          });
+        } catch (error) {
+          console.error("Error syncing user to DB:", error);
+        }
+      }
     });
 
     return () => unsubscribe();
