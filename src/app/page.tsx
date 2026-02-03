@@ -1,9 +1,15 @@
+"use client";
+
+import AuthButton from "@/components/AuthButton";
 import Image from "next/image";
 import styles from "./page.module.scss";
 
 export default function Home() {
   return (
     <div className={styles.page}>
+      <header className={styles.header}>
+        <AuthButton />
+      </header>
       <main className={styles.main}>
         <Image
           className={styles.logo}
