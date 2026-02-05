@@ -2,32 +2,8 @@
 import { InputInline } from "@/components/input-inline";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 export default function Home() {
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const checkCloudRun = async () => {
-      if (!user) return;
-
-      try {
-        console.log("Fetching Cloud Run API...");
-        const token = await user.getIdToken();
-        const res = await fetch("/api/cloud-run", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        console.log("☁️ Cloud Run Response:", data);
-      } catch (err) {
-        console.error("Cloud Run Error:", err);
-      }
-    };
-
-    checkCloudRun();
-  }, [user]);
-
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

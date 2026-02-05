@@ -9,20 +9,21 @@ app = Flask(__name__)
 # On Cloud Run, it automatically uses the service account credentials
 firebase_admin.initialize_app()
 
-@app.route("/", methods=["GET", "POST"])
-def hello():
+@app.route("/", methods=["POST"])
+def echo():
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        # For security, return 401 if no valid token
         return jsonify({"error": "Unauthorized: No token provided"}), 401
 
     token = auth_header.split("Bearer ")[1]
     
     try:
-        # Verify the ID token
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token['uid']
-        return f"Hello World from Cloud Run! (Authenticated user: {uid})"
+        
+        data = request.get_json()
+        keyword = data.get("keyword", "") if data else ""
+        return jsonify({"message": f"Echo: {keyword}", "uid": uid})
     except Exception as e:
         print(f"Error verifying token: {e}")
         return jsonify({"error": "Unauthorized: Invalid token"}), 401
