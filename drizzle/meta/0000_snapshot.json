@@ -59,9 +59,7 @@
         "papers_url_unique": {
           "name": "papers_url_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "url"
-          ]
+          "columns": ["url"]
         }
       },
       "policies": {},
