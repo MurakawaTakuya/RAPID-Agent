@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
@@ -60,11 +61,18 @@ export function InputInline() {
         />
         <Button
           size="lg"
-          className="h-10 px-6 rounded-lg"
+          className="h-10 px-6 rounded-lg cursor-pointer"
           onClick={handleSearch}
           disabled={loading || !user}
         >
-          {loading ? "Loading..." : "Search"}
+          {loading ? (
+            <>
+              <Spinner />
+              Searching
+            </>
+          ) : (
+            "Search"
+          )}
         </Button>
       </Field>
       {result && (
