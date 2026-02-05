@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import os
 import logging
 import json
+import uuid
 import firebase_admin
 from firebase_admin import auth
 from google import genai
@@ -75,10 +76,13 @@ def search():
         
         prompt = f"「{keyword}」について、最新の情報を検索して、日本語で簡潔に説明してください。URLが含まれている場合は、そのページの内容も参照してください。"
         
+        # Generate request ID for log correlation
+        request_id = str(uuid.uuid4())[:8]
+        
         # Log the prompt
         log_structured(
             "INFO", 
-            "Generating content", 
+            f"Generating content: {request_id}", 
             uid=uid, 
             keyword=keyword, 
             prompt=prompt,
@@ -120,7 +124,8 @@ def search():
         # Log successful response
         log_structured(
             "INFO",
-            "Content generated successfully",
+            f"Content generated successfully: {request_id}",
+            request_id=request_id,
             uid=uid,
             keyword=keyword,
             response_length=len(ai_response),
@@ -140,7 +145,8 @@ def search():
         # Log error
         log_structured(
             "ERROR", 
-            "Error processing request",
+            f"Error processing request: {request_id if 'request_id' in locals() else 'N/A'}",
+            request_id=request_id if 'request_id' in locals() else None,
             error=str(e),
             keyword=keyword if 'keyword' in locals() else None,
             uid=uid if 'uid' in locals() else None
