@@ -38,7 +38,7 @@ export default function Home() {
       </header>
       <div className={styles.page}>
         <main className={styles.main}>
-          <div className="flex flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-8 w-full">
             <h2 className="text-2xl font-bold">Paper Agent</h2>
             <InputInline />
           </div>
