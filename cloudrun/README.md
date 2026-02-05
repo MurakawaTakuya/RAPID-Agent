@@ -1,7 +1,6 @@
 # Cloud Run Python App
 
-シンプルな Hello World Flask アプリケーション。
-Next.js API (`/api/cloud-run`) をプロキシとして経由し、Firebase IDトークンで認証します。
+Next.js API (`/api/cloud-run`) をプロキシとして経由し、Firebase IDトークンで認証
 
 ## ファイル構成
 
@@ -17,14 +16,14 @@ cloudrun/
 
 ```bash
 cd cloudrun
-gcloud run deploy hello-world --source . --region asia-northeast1 --project $PROJECT_ID --allow-unauthenticated --timeout=300
+gcloud run deploy paper-agent-api --source . --region asia-northeast1 --project $PROJECT_ID --allow-unauthenticated --timeout=300
 ```
 
 ## サービス情報
 
 | 項目 | 値 |
 |-----|-----|
-| サービス名 | hello-world |
+| サービス名 | paper-agent-api |
 | リージョン | asia-northeast1（東京） |
 | Ingress | all (公開) ※ただしアプリレベルで認証必須 |
 
