@@ -1,9 +1,27 @@
 from flask import Flask, request, jsonify
 import os
+import logging
+import json
 import firebase_admin
 from firebase_admin import auth
 from google import genai
 from google.genai import types
+
+# Configure logging for Cloud Run
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s'
+)
+logger = logging.getLogger(__name__)
+
+def log_structured(severity: str, message: str, **kwargs):
+    """Log in structured format for Cloud Logging"""
+    log_entry = {
+        "severity": severity,
+        "message": message,
+        **kwargs
+    }
+    print(json.dumps(log_entry, ensure_ascii=False))
 
 app = Flask(__name__)
 
@@ -25,6 +43,11 @@ MODEL_ID = "gemini-2.5-flash"
 def search():
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
+        log_structured(
+            "WARNING", 
+            "Unauthorized request", 
+            error="No token provided"
+        )
         return jsonify({"error": "Unauthorized: No token provided"}), 401
 
     token = auth_header.split("Bearer ")[1]
@@ -37,6 +60,7 @@ def search():
         keyword = data.get("keyword", "") if data else ""
         
         if not keyword:
+            log_structured("INFO", "Empty keyword received", uid=uid)
             return jsonify({"message": "キーワードを入力してください", "uid": uid})
         
         # Use Google Search grounding + URL context
@@ -50,6 +74,16 @@ def search():
         )
         
         prompt = f"「{keyword}」について、最新の情報を検索して、日本語で簡潔に説明してください。URLが含まれている場合は、そのページの内容も参照してください。"
+        
+        # Log the prompt
+        log_structured(
+            "INFO", 
+            "Generating content", 
+            uid=uid, 
+            keyword=keyword, 
+            prompt=prompt,
+            model=MODEL_ID
+        )
         
         response = client.models.generate_content(
             model=MODEL_ID,
@@ -83,6 +117,18 @@ def search():
                         "status": url_meta.url_retrieval_status if hasattr(url_meta, 'url_retrieval_status') else ""
                     })
         
+        # Log successful response
+        log_structured(
+            "INFO",
+            "Content generated successfully",
+            uid=uid,
+            keyword=keyword,
+            response_length=len(ai_response),
+            sources_count=len(sources),
+            url_sources_count=len(url_sources),
+            ai_response=ai_response[:500] if len(ai_response) > 500 else ai_response
+        )
+        
         return jsonify({
             "message": ai_response,
             "keyword": keyword,
@@ -91,9 +137,21 @@ def search():
             "urlSources": url_sources
         })
     except Exception as e:
-        print(f"Error: {e}")
+        # Log error
+        log_structured(
+            "ERROR", 
+            "Error processing request",
+            error=str(e),
+            keyword=keyword if 'keyword' in locals() else None,
+            uid=uid if 'uid' in locals() else None
+        )
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
+    log_structured(
+        "INFO", 
+        "Starting server", 
+        port=port
+    )
     app.run(host="0.0.0.0", port=port)
