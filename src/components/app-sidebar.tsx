@@ -6,6 +6,7 @@ import {
   ChevronsUpDown,
   History,
   LogOut,
+  LucideIcon,
   Settings2,
   SquareTerminal,
   Star,
@@ -38,7 +39,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const data = {
+interface NavItem {
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: {
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+  }[];
+}
+
+const data: { navMain: NavItem[] } = {
   navMain: [
     {
       title: "Playground",
@@ -109,7 +122,7 @@ const data = {
 };
 
 export function AppSidebar() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const { isMobile } = useSidebar();
 
   const userInitials = user?.email
@@ -170,7 +183,7 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={user?.photoURL || ""}
+                      src={user?.photoURL || undefined}
                       alt={user?.displayName || "User"}
                     />
                     <AvatarFallback className="rounded-lg">
@@ -194,7 +207,7 @@ export function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
