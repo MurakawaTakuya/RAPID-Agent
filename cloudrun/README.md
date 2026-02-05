@@ -1,12 +1,13 @@
 # Cloud Run Python App
 
 シンプルな Hello World Flask アプリケーション。
+Next.js API (`/api/cloud-run`) をプロキシとして経由し、Firebase IDトークンで認証します。
 
 ## ファイル構成
 
 ```
 cloudrun/
-├── main.py           # Flaskアプリ
+├── main.py           # Flaskアプリ (Firebase Admin SDKで認証)
 ├── requirements.txt  # Python依存パッケージ
 ├── Dockerfile        # コンテナ設定
 └── README.md         # このファイル
@@ -25,12 +26,22 @@ gcloud run deploy hello-world --source . --region asia-northeast1 --project $PRO
 |-----|-----|
 | サービス名 | hello-world |
 | リージョン | asia-northeast1（東京） |
+| Ingress | all (公開) ※ただしアプリレベルで認証必須 |
 
-## ローカル実行（オプション）
+## セキュリティ構成
+
+```
+[クライアント] -> [/api/cloud-run] -> [Next.jsサーバー] -> [Python Cloud Run]
+(URL隠蔽)          (Proxy)             (Token転送)        (Token検証)
+```
+
+1. **Proxy**: Next.js API (`src/app/api/cloud-run/route.ts`) がリクエストを受け、Authorizationヘッダーを付与してPythonサービスへ転送します。
+2. **App Auth**: `main.py` 内で `firebase-admin` を使用してIDトークンを検証します。トークンがない場合は `401 Unauthorized` を返します。
+3. **Public Network**: Cloud Run自体は `allow-unauthenticated` ですが、有効なFirebaseトークンを知らない限りアクセスできません。
+
+## ローカル実行
 
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
-
-http://localhost:8080 でアクセス可能。

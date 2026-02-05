@@ -1,8 +1,33 @@
+"use client";
 import AuthButton from "@/components/AuthButton";
+import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
+import { useEffect } from "react";
 import styles from "./page.module.scss";
 
 export default function Home() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const checkCloudRun = async () => {
+      if (!user) return;
+
+      try {
+        console.log("Fetching Cloud Run API...");
+        const token = await user.getIdToken();
+        const res = await fetch("/api/cloud-run", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        console.log("☁️ Cloud Run Response:", data);
+      } catch (err) {
+        console.error("Cloud Run Error:", err);
+      }
+    };
+
+    checkCloudRun();
+  }, [user]);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
