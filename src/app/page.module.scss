@@ -15,3 +15,13 @@
   padding: 80px;
   font-family: var(--font-geist-sans);
 }
+
+.main {
+  display: flex;
+  flex-direction: column;
+  grid-row-start: 2;
+  gap: 32px;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+}
