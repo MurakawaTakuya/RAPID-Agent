@@ -4,7 +4,6 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
-import styles from "./page.module.scss";
 
 export default function Home() {
   const { user } = useAuth();
@@ -36,12 +35,10 @@ export default function Home() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <h1 className="text-lg font-semibold">ホーム</h1>
       </header>
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <div className="flex flex-col items-center gap-8 w-full">
-            <h2 className="text-2xl font-bold">Paper Agent</h2>
-            <InputInline />
-          </div>
+      <div className="flex flex-1 items-center justify-center pb-24">
+        <main className="flex flex-col items-center gap-8 w-full max-w-3xl px-4">
+          <h2 className="text-2xl font-bold">Paper Agent</h2>
+          <InputInline />
         </main>
       </div>
     </SidebarInset>
