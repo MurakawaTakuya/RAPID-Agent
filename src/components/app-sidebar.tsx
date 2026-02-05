@@ -131,10 +131,10 @@ export function AppSidebar() {
     : "CN";
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarGroupLabel>Paper Agent</SidebarGroupLabel>
           <SidebarMenu>
             {data.navMain.map((item) => (
               <Collapsible
