@@ -37,7 +37,11 @@ export function InputInline() {
         setResult(`Error: ${data.error}`);
       }
     } catch (error) {
-      setResult(`Error: ${error}`);
+      if (error instanceof Error) {
+        setResult(`Error: ${error.message}`);
+      } else {
+        setResult(`Error: ${String(error)}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -58,6 +62,7 @@ export function InputInline() {
           onKeyDown={(e) => {
             if (e.key === "Enter") handleSearch();
           }}
+          disabled={loading}
         />
         <Button
           size="lg"
