@@ -22,7 +22,7 @@ def log_structured(severity: str, message: str, **kwargs):
         "message": message,
         **kwargs
     }
-    print(json.dumps(log_entry, ensure_ascii=False))
+    print(json.dumps(log_entry, ensure_ascii=False), flush=True)
 
 app = Flask(__name__)
 
@@ -30,18 +30,16 @@ app = Flask(__name__)
 # On Cloud Run, it automatically uses the service account credentials
 firebase_admin.initialize_app()
 
-# Initialize Genai Client
-# On Cloud Run, it uses Application Default Credentials
-client = genai.Client(
-    vertexai=True,
-    project=os.environ.get("GOOGLE_CLOUD_PROJECT", ""),
-    location=os.environ.get("VERTEX_AI_LOCATION", "asia-northeast1")
-)
-
-MODEL_ID = "gemini-2.5-flash"
-
 @app.route("/", methods=["POST"])
 def search():
+    # Initialize Genai Client
+    client = genai.Client(
+        vertexai=True,
+        project=os.environ.get("GOOGLE_CLOUD_PROJECT", ""),
+        location=os.environ.get("VERTEX_AI_LOCATION", "asia-northeast1")
+    )
+    model_id = "gemini-2.5-flash"
+    
     request_id, uid, keyword = None, None, None
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -73,7 +71,7 @@ def search():
         
         config = types.GenerateContentConfig(
             tools=tools,
-            system_instruction="ユーザーのキーワードについて、最新の情報を検索して、キーワードに沿った論文を探してきてください。論文タイトルのみを配列に入れて、配列のみを出力してください。(コードブロック表示も無しで、[で初めて]で終わって)URLが含まれている場合は、そのページの内容も参照してください。"
+            system_instruction="ユーザーのキーワードについて、最新の情報を検索して、キーワードに沿った論文を全てリストアップしてください。論文タイトルと論文ページ(タイトルやabstractが個別に書かれているページ)へのリンクをjsonにして出力してください。json以外は何も出力しないでください。"
         )
         
         # Generate request ID for log correlation
@@ -85,11 +83,11 @@ def search():
             f"Generating content: {request_id}", 
             uid=uid, 
             keyword=keyword,
-            model=MODEL_ID
+            model=model_id
         )
         
         response = client.models.generate_content(
-            model=MODEL_ID,
+            model=model_id,
             contents=keyword,
             config=config,
         )
