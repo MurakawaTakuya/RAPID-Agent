@@ -42,6 +42,7 @@ MODEL_ID = "gemini-2.5-flash"
 
 @app.route("/", methods=["POST"])
 def search():
+    request_id, uid, keyword = None, None, None
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         log_structured(
@@ -71,27 +72,25 @@ def search():
         ]
         
         config = types.GenerateContentConfig(
-            tools=tools
+            tools=tools,
+            system_instruction="ユーザーのキーワードについて、最新の情報を検索して、キーワードに沿った論文を探してきてください。論文タイトルのみを配列に入れて、配列のみを出力してください。(コードブロック表示も無しで、[で初めて]で終わって)URLが含まれている場合は、そのページの内容も参照してください。"
         )
-        
-        prompt = f"「{keyword}」について、最新の情報を検索して、日本語で簡潔に説明してください。URLが含まれている場合は、そのページの内容も参照してください。"
         
         # Generate request ID for log correlation
         request_id = str(uuid.uuid4())[:8]
         
-        # Log the prompt
+        # Log the request
         log_structured(
             "INFO", 
             f"Generating content: {request_id}", 
             uid=uid, 
-            keyword=keyword, 
-            prompt=prompt,
+            keyword=keyword,
             model=MODEL_ID
         )
         
         response = client.models.generate_content(
             model=MODEL_ID,
-            contents=prompt,
+            contents=keyword,
             config=config,
         )
         
@@ -106,8 +105,8 @@ def search():
                 for chunk in metadata.grounding_chunks:
                     if hasattr(chunk, 'web') and chunk.web:
                         sources.append({
-                            "title": chunk.web.title if hasattr(chunk.web, 'title') else "",
-                            "uri": chunk.web.uri if hasattr(chunk.web, 'uri') else ""
+                            "title": getattr(chunk.web, 'title', ""),
+                            "uri": getattr(chunk.web, 'uri', "")
                         })
         
         # Get URL context metadata if available
@@ -117,8 +116,8 @@ def search():
             if hasattr(url_metadata, 'url_metadata') and url_metadata.url_metadata:
                 for url_meta in url_metadata.url_metadata:
                     url_sources.append({
-                        "url": url_meta.retrieved_url if hasattr(url_meta, 'retrieved_url') else "",
-                        "status": url_meta.url_retrieval_status if hasattr(url_meta, 'url_retrieval_status') else ""
+                        "url": getattr(url_meta, 'retrieved_url', ""),
+                        "status": getattr(url_meta, 'url_retrieval_status', "")
                     })
         
         # Log successful response
@@ -145,11 +144,11 @@ def search():
         # Log error
         log_structured(
             "ERROR", 
-            f"Error processing request: {request_id if 'request_id' in locals() else 'N/A'}",
-            request_id=request_id if 'request_id' in locals() else None,
+            f"Error processing request: {request_id or 'N/A'}",
+            request_id=request_id,
             error=str(e),
-            keyword=keyword if 'keyword' in locals() else None,
-            uid=uid if 'uid' in locals() else None
+            keyword=keyword,
+            uid=uid
         )
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
