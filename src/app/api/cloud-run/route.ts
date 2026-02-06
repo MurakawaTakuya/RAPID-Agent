@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CLOUD_RUN_URL = process.env.PYTHON_CLOUD_RUN_URL || "";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,26 +14,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const body = await request.json();
+
     const response = await fetch(CLOUD_RUN_URL, {
-      headers: { Authorization: authHeader },
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    // Python API returns text for success, JSON for error (usually)
-    // We treat the body as text to be safe, then wrap it or parse it
-    const text = await response.text();
+    const data = await response.json();
 
     if (!response.ok) {
-      // Try to parse as JSON if possible for better error message
-      try {
-        const jsonErr = JSON.parse(text);
-        return NextResponse.json(jsonErr, { status: response.status });
-      } catch {
-        return NextResponse.json({ error: text }, { status: response.status });
-      }
+      return NextResponse.json(data, { status: response.status });
     }
 
-    // Success: return as JSON data
-    return NextResponse.json({ data: text });
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Proxy error:", error);
     return NextResponse.json(
