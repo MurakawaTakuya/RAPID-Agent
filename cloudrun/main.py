@@ -128,7 +128,7 @@ def search():
             response_length=len(ai_response),
             sources_count=len(sources),
             url_sources_count=len(url_sources),
-            ai_response=ai_response[:500] if len(ai_response) > 500 else ai_response
+            ai_response=ai_response
         )
         
         return jsonify({
