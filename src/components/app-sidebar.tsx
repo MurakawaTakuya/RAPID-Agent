@@ -123,8 +123,12 @@ const data: { navMain: NavItem[] } = {
 };
 
 export function AppSidebar() {
-  const { user, signOut, signInWithGoogle } = useAuth();
+  const { user, signOut, signInWithGoogle, loading } = useAuth();
   const { isMobile } = useSidebar();
+
+  if (loading) return null;
+
+  if (!user) return null;
 
   const userInitials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
