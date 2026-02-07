@@ -52,6 +52,12 @@ export function InputInline() {
           setResult(data);
         } else if (data.error) {
           setError(data.error);
+        } else if (data.message) {
+          // Handle message-only responses (e.g., empty keyword case)
+          setError(data.message);
+        } else {
+          // Fallback for unexpected response format
+          setError("予期しないレスポンス形式です");
         }
       } else {
         setError(data.error || "検索に失敗しました");
@@ -116,7 +122,7 @@ export function InputInline() {
             {result.papers.map((paper, index) => (
               <a
                 key={index}
-                href={paper.url}
+                href={paper.url.startsWith("http") ? paper.url : "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
