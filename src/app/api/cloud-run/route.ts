@@ -1,6 +1,13 @@
+import { db, schema } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 const CLOUD_RUN_URL = process.env.PYTHON_CLOUD_RUN_URL || "";
+
+interface Paper {
+  url: string;
+  title: string;
+  embedding?: number[];
+}
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
@@ -29,6 +36,38 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(data, { status: response.status });
+    }
+
+    // TODO: 今後、フロントで指定したpaperだけDBに保存するように変更
+
+    // Save papers to database (same as user registration pattern)
+    if (db && data.papers && Array.isArray(data.papers)) {
+      try {
+        const dbClient = db; // Capture in variable to satisfy TypeScript
+        await Promise.all(
+          data.papers.map(async (paper: Paper) => {
+            if (!paper.url || !paper.title) return;
+
+            await dbClient
+              .insert(schema.papers)
+              .values({
+                url: paper.url,
+                title: paper.title,
+                embedding: paper.embedding,
+              })
+              .onConflictDoUpdate({
+                target: schema.papers.url,
+                set: {
+                  title: paper.title,
+                  embedding: paper.embedding,
+                },
+              });
+          })
+        );
+      } catch (dbError) {
+        console.error("Error saving papers to DB:", dbError);
+        // Continue even if DB save fails - return Cloud Run response
+      }
     }
 
     return NextResponse.json(data);
