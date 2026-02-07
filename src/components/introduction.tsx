@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
 import FloatingLines from "./FloatingLines";
+import { AnimatedGradientText } from "./ui/animated-gradient-text";
 
 export function Introduction() {
   const { signInWithGoogle, loading } = useAuth();
@@ -20,9 +22,25 @@ export function Introduction() {
       </div>
 
       <div className="space-y-4 max-w-2xl z-10 glass-panel p-8 rounded-2xl">
-        <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-          <Sparkles className="mr-2 h-4 w-4" />
-          <span>AI-Powered Research Assistant</span>
+        <div className="group relative mx-auto flex w-fit items-center justify-center rounded-full px-4 py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f]">
+          <span
+            className={cn(
+              "animate-gradient absolute inset-0 block h-full w-full rounded-[inherit] bg-gradient-to-r from-[#ffaa40]/50 via-[#9c40ff]/50 to-[#ffaa40]/50 bg-[length:300%_100%] p-[1px]"
+            )}
+            style={{
+              WebkitMask:
+                "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "destination-out",
+              mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              maskComposite: "subtract",
+              WebkitClipPath: "padding-box",
+            }}
+          />
+          <Sparkles className="h-4 w-4 shrink-0 text-amber-500" />
+          <hr className="mx-2 h-4 w-px shrink-0 bg-neutral-500" />
+          <AnimatedGradientText className="text-sm font-medium">
+            AI-Powered Research Assistant
+          </AnimatedGradientText>
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
           Paper Agent
