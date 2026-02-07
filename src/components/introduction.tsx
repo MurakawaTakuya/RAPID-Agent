@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -15,8 +14,8 @@ export function Introduction() {
       <div className="fixed top-0 left-0 w-full h-full -z-10 bg-background">
         <FloatingLines
           enabledWaves={["top", "bottom", "middle"]}
-          lineDistance={15}
-          lineCount={13}
+          lineDistance={10}
+          lineCount={10}
           interactive={false}
         />
       </div>
@@ -51,15 +50,24 @@ export function Introduction() {
       </div>
 
       <div className="flex flex-col items-center gap-4 z-10">
-        <Button
-          size="lg"
+        <button
           onClick={signInWithGoogle}
           disabled={loading}
-          className="font-semibold text-lg h-12 px-8 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+          className="group relative h-12 px-8 rounded-lg font-semibold text-lg text-white overflow-hidden cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+          style={{
+            background:
+              "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+            boxShadow: "0 4px 15px rgba(102, 126, 234, 0.4)",
+          }}
         >
-          {loading ? "Loading..." : "Get Started"}
-          {!loading && <ArrowRight className="ml-2 h-5 w-5" />}
-        </Button>
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+          <span className="relative flex items-center justify-center gap-2">
+            {loading ? "Loading..." : "Get Started"}
+            {!loading && (
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+            )}
+          </span>
+        </button>
         <p className="text-sm text-muted-foreground">
           Google Account login required
         </p>
