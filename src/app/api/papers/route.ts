@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
           title: schema.papers.title,
           abstract: schema.papers.abstract,
           authors: schema.papers.authors,
+          embedding: schema.papers.embedding,
           createdAt: schema.papers.createdAt,
         })
         .from(schema.papers)
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
           title: schema.papers.title,
           abstract: schema.papers.abstract,
           authors: schema.papers.authors,
+          embedding: schema.papers.embedding,
           createdAt: schema.papers.createdAt,
         })
         .from(schema.papers)
