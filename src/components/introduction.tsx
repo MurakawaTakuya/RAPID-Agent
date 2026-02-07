@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
 import FloatingLines from "./FloatingLines";
 import { AnimatedGradientText } from "./ui/animated-gradient-text";
+import { MagicCard } from "./ui/magic-card";
 
 export function Introduction() {
   const { signInWithGoogle, loading } = useAuth();
@@ -74,27 +75,33 @@ export function Introduction() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-5xl text-left z-10">
-        <div className="p-6 rounded-xl border bg-card/80 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all duration-300">
-          <h3 className="font-semibold text-lg mb-2">Smart Search</h3>
-          <p className="text-muted-foreground">
-            Find relevant papers using natural language queries powered by
-            advanced embeddings.
-          </p>
-        </div>
-        <div className="p-6 rounded-xl border bg-card/80 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all duration-300">
-          <h3 className="font-semibold text-lg mb-2">AI Analysis</h3>
-          <p className="text-muted-foreground">
-            Get instant summaries and insights from papers without reading the
-            entire document.
-          </p>
-        </div>
-        <div className="p-6 rounded-xl border bg-card/80 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all duration-300">
-          <h3 className="font-semibold text-lg mb-2">Organized Library</h3>
-          <p className="text-muted-foreground">
-            Save interesting papers to your personal library and manage them
-            with ease.
-          </p>
-        </div>
+        <MagicCard className="rounded-xl">
+          <div className="p-6">
+            <h3 className="font-semibold text-lg mb-2">Smart Search</h3>
+            <p className="text-muted-foreground">
+              Find relevant papers using natural language queries powered by
+              advanced embeddings.
+            </p>
+          </div>
+        </MagicCard>
+        <MagicCard className="rounded-xl">
+          <div className="p-6">
+            <h3 className="font-semibold text-lg mb-2">AI Analysis</h3>
+            <p className="text-muted-foreground">
+              Get instant summaries and insights from papers without reading the
+              entire document.
+            </p>
+          </div>
+        </MagicCard>
+        <MagicCard className="rounded-xl">
+          <div className="p-6">
+            <h3 className="font-semibold text-lg mb-2">Organized Library</h3>
+            <p className="text-muted-foreground">
+              Save interesting papers to your personal library and manage them
+              with ease.
+            </p>
+          </div>
+        </MagicCard>
       </div>
     </div>
   );
