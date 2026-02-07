@@ -70,24 +70,32 @@ def extract_json_from_response(text: str) -> dict | None:
     return None
 
 
+# TDDO: 一度にembeddingできるのは最大で250個までの可能性あり
 def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a list of texts using Gemini embedding model"""
+    """Generate embeddings for a list of texts using Gemini embedding model
+    
+    Handles batching automatically if more than 250 texts are provided.
+    """
     if not texts:
         return []
     
-    embeddings = []
-    for text in texts:
+    BATCH_SIZE = 250
+    all_embeddings = []
+    
+    # Process in batches of 250
+    for i in range(0, len(texts), BATCH_SIZE):
+        batch = texts[i:i + BATCH_SIZE]
         result = client.models.embed_content(
             model="gemini-embedding-001",
-            contents=text,
+            contents=batch,
             config={
                 "output_dimensionality": 768,  # Match DB schema (768 dimensions)
                 "task_type": "CLUSTERING",  # Optimized for similarity-based grouping
             },
         )
-        embeddings.append(result.embeddings[0].values)
+        all_embeddings.extend([e.values for e in result.embeddings])
     
-    return embeddings
+    return all_embeddings
 
 
 
@@ -122,7 +130,12 @@ def search():
         
         if not keyword:
             log_structured("INFO", "Empty keyword received", uid=uid)
-            return jsonify({"message": "キーワードを入力してください", "uid": uid})
+            return jsonify({
+                "papers": [],
+                "keyword": "",
+                "uid": uid,
+                "message": "キーワードを入力してください"
+            })
         
         # Use Google Search grounding + URL context
         tools = [
