@@ -5,11 +5,26 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
+
+interface Paper {
+  title: string;
+  url: string;
+  embedding?: number[];
+}
+
+interface SearchResult {
+  papers: Paper[];
+  keyword: string;
+  uid: string;
+  error?: string;
+}
 
 export function InputInline() {
   const [keyword, setKeyword] = useState("");
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
@@ -18,6 +33,7 @@ export function InputInline() {
 
     setLoading(true);
     setResult(null);
+    setError(null);
 
     try {
       const token = await user.getIdToken();
@@ -32,15 +48,19 @@ export function InputInline() {
 
       const data = await response.json();
       if (response.ok) {
-        setResult(data.message);
+        if (data.papers) {
+          setResult(data);
+        } else if (data.error) {
+          setError(data.error);
+        }
       } else {
-        setResult(`Error: ${data.error}`);
+        setError(data.error || "検索に失敗しました");
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        setResult(`Error: ${error.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
-        setResult(`Error: ${String(error)}`);
+        setError(String(err));
       }
     } finally {
       setLoading(false);
@@ -55,7 +75,7 @@ export function InputInline() {
       >
         <Input
           type="search"
-          placeholder="Search..."
+          placeholder="Search papers..."
           className="h-12 text-lg border-0 shadow-none focus-visible:ring-0 px-4"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
@@ -80,10 +100,49 @@ export function InputInline() {
           )}
         </Button>
       </Field>
-      {result && (
+
+      {error && (
+        <div className="max-w-3xl w-full p-4 rounded-lg border border-destructive bg-destructive/10">
+          <p className="text-sm text-destructive">{error}</p>
+        </div>
+      )}
+
+      {result && result.papers && result.papers.length > 0 && (
+        <div className="max-w-3xl w-full space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Found {result.papers.length} papers for &quot;{result.keyword}&quot;
+          </p>
+          <div className="grid gap-3">
+            {result.papers.map((paper, index) => (
+              <a
+                key={index}
+                href={paper.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {paper.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {paper.url}
+                    </p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {result && result.papers && result.papers.length === 0 && (
         <div className="max-w-3xl w-full p-4 rounded-lg border bg-muted/50">
-          <p className="text-sm text-muted-foreground">Response:</p>
-          <p className="text-lg font-medium">{result}</p>
+          <p className="text-sm text-muted-foreground">
+            No papers found for &quot;{result.keyword}&quot;
+          </p>
         </div>
       )}
     </div>
