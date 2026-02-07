@@ -3,6 +3,7 @@ import os
 import logging
 import json
 import uuid
+import re
 import firebase_admin
 from firebase_admin import auth
 from google import genai
@@ -29,6 +30,74 @@ app = Flask(__name__)
 # Initialize Firebase Admin SDK
 # On Cloud Run, it automatically uses the service account credentials
 firebase_admin.initialize_app()
+
+# System instruction for JSON-only output
+SEARCH_SYSTEM_INSTRUCTION = """
+あなたは論文検索アシスタントです。ユーザーのキーワードについて最新情報を検索し、関連する論文をリストアップしてください。
+
+【重要な指示】
+- 必ずJSON形式のみで出力してください
+- JSON以外のテキスト（説明文、挨拶、マークダウン記号など）は一切出力しないでください
+- コードブロック記号（```json や ```）も使用しないでください
+
+【出力フォーマット】
+以下の形式で出力してください:
+{"papers": [{"title": "論文タイトル", "url": "論文ページへのURL"}, ...]}
+
+【論文ページのURLについて】
+- 論文の個別ページ（タイトルやabstractが表示されるページ）へのリンクを使用してください
+- 例: arXiv, IEEE, ACM, Google Scholar などの論文詳細ページ
+"""
+
+
+def extract_json_from_response(text: str) -> dict | None:
+    """Extract JSON from LLM response, handling potential markdown formatting"""
+    # Remove markdown code blocks if present
+    text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
+    text = text.strip()
+    
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Try to find JSON object in the text
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                return None
+    return None
+
+
+# TDDO: 一度にembeddingできるのは最大で250個までの可能性あり
+def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
+    """Generate embeddings for a list of texts using Gemini embedding model
+    
+    Handles batching automatically if more than 250 texts are provided.
+    """
+    if not texts:
+        return []
+    
+    BATCH_SIZE = 250
+    all_embeddings = []
+    
+    # Process in batches of 250
+    for i in range(0, len(texts), BATCH_SIZE):
+        batch = texts[i:i + BATCH_SIZE]
+        result = client.models.embed_content(
+            model="gemini-embedding-001",
+            contents=batch,
+            config={
+                "output_dimensionality": 768,  # Match DB schema (768 dimensions)
+                "task_type": "CLUSTERING",  # Optimized for similarity-based grouping
+            },
+        )
+        all_embeddings.extend([e.values for e in result.embeddings])
+    
+    return all_embeddings
+
+
 
 @app.route("/", methods=["POST"])
 def search():
@@ -61,7 +130,12 @@ def search():
         
         if not keyword:
             log_structured("INFO", "Empty keyword received", uid=uid)
-            return jsonify({"message": "キーワードを入力してください", "uid": uid})
+            return jsonify({
+                "papers": [],
+                "keyword": "",
+                "uid": uid,
+                "message": "キーワードを入力してください"
+            })
         
         # Use Google Search grounding + URL context
         tools = [
@@ -71,7 +145,8 @@ def search():
         
         config = types.GenerateContentConfig(
             tools=tools,
-            system_instruction="ユーザーのキーワードについて、最新の情報を検索して、キーワードに沿った論文を全てリストアップしてください。論文タイトルと論文ページ(タイトルやabstractが個別に書かれているページ)へのリンクをjsonにして出力してください。json以外は何も出力しないでください。"
+            system_instruction=SEARCH_SYSTEM_INSTRUCTION,
+            # Note: response_mime_type cannot be used with URL Context tool
         )
         
         # Generate request ID for log correlation
@@ -95,28 +170,31 @@ def search():
         # Extract text from response
         ai_response = response.text
         
-        # Get grounding metadata if available
-        sources = []
-        if hasattr(response.candidates[0], 'grounding_metadata') and response.candidates[0].grounding_metadata:
-            metadata = response.candidates[0].grounding_metadata
-            if hasattr(metadata, 'grounding_chunks') and metadata.grounding_chunks:
-                for chunk in metadata.grounding_chunks:
-                    if hasattr(chunk, 'web') and chunk.web:
-                        sources.append({
-                            "title": getattr(chunk.web, 'title', ""),
-                            "uri": getattr(chunk.web, 'uri', "")
-                        })
+        # Parse JSON response
+        parsed_response = extract_json_from_response(ai_response)
         
-        # Get URL context metadata if available
-        url_sources = []
-        if hasattr(response.candidates[0], 'url_context_metadata') and response.candidates[0].url_context_metadata:
-            url_metadata = response.candidates[0].url_context_metadata
-            if hasattr(url_metadata, 'url_metadata') and url_metadata.url_metadata:
-                for url_meta in url_metadata.url_metadata:
-                    url_sources.append({
-                        "url": getattr(url_meta, 'retrieved_url', ""),
-                        "status": getattr(url_meta, 'url_retrieval_status', "")
-                    })
+        if not parsed_response or "papers" not in parsed_response:
+            log_structured(
+                "WARNING",
+                f"Failed to parse LLM response: {request_id}",
+                raw_response=ai_response[:500]
+            )
+            return jsonify({
+                "error": "論文リストの取得に失敗しました",
+                "raw_response": ai_response
+            }), 500
+        
+        papers = parsed_response.get("papers", [])
+        
+        # Generate embeddings for paper titles
+        if papers:
+            titles = [paper.get("title", "") for paper in papers]
+            embeddings = generate_embeddings(client, titles)
+            
+            # Add embeddings to papers
+            for i, paper in enumerate(papers):
+                if i < len(embeddings):
+                    paper["embedding"] = embeddings[i]
         
         # Log successful response
         log_structured(
@@ -125,18 +203,13 @@ def search():
             request_id=request_id,
             uid=uid,
             keyword=keyword,
-            response_length=len(ai_response),
-            sources_count=len(sources),
-            url_sources_count=len(url_sources),
-            ai_response=ai_response
+            papers_count=len(papers)
         )
         
         return jsonify({
-            "message": ai_response,
+            "papers": papers,
             "keyword": keyword,
             "uid": uid,
-            "sources": sources,
-            "urlSources": url_sources
         })
     except Exception as e:
         # Log error
