@@ -5,25 +5,21 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
-import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 
-interface Paper {
+export interface Paper {
   title: string;
   url: string;
   embedding?: number[];
 }
 
-interface SearchResult {
-  papers: Paper[];
-  keyword: string;
-  uid: string;
-  error?: string;
+interface InputInlineProps {
+  onSearchSuccess?: (papers: Paper[], keyword: string) => void;
 }
 
-export function InputInline() {
+export function InputInline({ onSearchSuccess }: InputInlineProps) {
   const [keyword, setKeyword] = useState("");
-  const [result, setResult] = useState<SearchResult | null>(null);
+  // Remove local result state
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -32,7 +28,7 @@ export function InputInline() {
     if (!keyword.trim() || !user) return;
 
     setLoading(true);
-    setResult(null);
+    // setResult(null); // Removed locally
     setError(null);
 
     try {
@@ -49,14 +45,15 @@ export function InputInline() {
       const data = await response.json();
       if (response.ok) {
         if (data.papers) {
-          setResult(data);
+          // Pass data up instead of setting local state
+          if (onSearchSuccess) {
+            onSearchSuccess(data.papers, data.keyword);
+          }
         } else if (data.error) {
           setError(data.error);
         } else if (data.message) {
-          // Handle message-only responses (e.g., empty keyword case)
           setError(data.message);
         } else {
-          // Fallback for unexpected response format
           setError("予期しないレスポンス形式です");
         }
       } else {
@@ -110,45 +107,6 @@ export function InputInline() {
       {error && (
         <div className="max-w-3xl w-full p-4 rounded-lg border border-destructive bg-destructive/10">
           <p className="text-sm text-destructive">{error}</p>
-        </div>
-      )}
-
-      {result && result.papers && result.papers.length > 0 && (
-        <div className="max-w-3xl w-full space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Found {result.papers.length} papers for &quot;{result.keyword}&quot;
-          </p>
-          <div className="grid gap-3">
-            {result.papers.map((paper, index) => (
-              <a
-                key={index}
-                href={paper.url.startsWith("http") ? paper.url : "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
-                      {paper.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      {paper.url}
-                    </p>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {result && result.papers && result.papers.length === 0 && (
-        <div className="max-w-3xl w-full p-4 rounded-lg border bg-muted/50">
-          <p className="text-sm text-muted-foreground">
-            No papers found for &quot;{result.keyword}&quot;
-          </p>
         </div>
       )}
     </div>
