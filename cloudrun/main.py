@@ -90,39 +90,6 @@ def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
     return embeddings
 
 
-def save_papers_to_db(papers: list[dict], base_url: str) -> list[dict]:
-    """Save papers to database via Next.js API"""
-    import requests
-    
-    saved_papers = []
-    for paper in papers:
-        try:
-            response = requests.post(
-                f"{base_url}/api/papers",
-                json={
-                    "url": paper.get("url", ""),
-                    "title": paper.get("title", ""),
-                    "embedding": paper.get("embedding", []),
-                },
-                timeout=10
-            )
-            if response.ok:
-                saved_papers.append(response.json())
-            else:
-                log_structured(
-                    "WARNING",
-                    f"Failed to save paper: {paper.get('title', 'Unknown')}",
-                    status_code=response.status_code
-                )
-        except Exception as e:
-            log_structured(
-                "ERROR",
-                f"Error saving paper: {paper.get('title', 'Unknown')}",
-                error=str(e)
-            )
-    
-    return saved_papers
-
 
 @app.route("/", methods=["POST"])
 def search():
@@ -215,11 +182,6 @@ def search():
             for i, paper in enumerate(papers):
                 if i < len(embeddings):
                     paper["embedding"] = embeddings[i]
-        
-        # Save papers to database (optional, based on NEXTJS_API_URL env var)
-        nextjs_url = os.environ.get("NEXTJS_API_URL", "")
-        if nextjs_url:
-            save_papers_to_db(papers, nextjs_url)
         
         # Log successful response
         log_structured(
