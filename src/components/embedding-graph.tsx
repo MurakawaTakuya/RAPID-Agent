@@ -137,6 +137,43 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     const points = new THREE.Points(geometry, material);
     scene.add(points);
 
+    // --- Add Visual Helpers ---
+    // 1. Axes Helper (Removed as requested)
+    // const axesHelper = new THREE.AxesHelper(100);
+    // scene.add(axesHelper);
+
+    // 2. Custom Grid (Rectangular, bounded by data)
+    const gridSizeStep = 0.001;
+    const gridColor = new THREE.Color(0x444444);
+    const gridMaterial = new THREE.LineBasicMaterial({ color: gridColor });
+    const gridPoints: number[] = [];
+
+    // Adjust bounds to align with grid step
+    const startX = Math.floor(minX / gridSizeStep) * gridSizeStep;
+    const endX = Math.ceil(maxX / gridSizeStep) * gridSizeStep;
+    const startY = Math.floor(minY / gridSizeStep) * gridSizeStep;
+    const endY = Math.ceil(maxY / gridSizeStep) * gridSizeStep;
+
+    // Vertical lines
+    for (let x = startX; x <= endX + gridSizeStep / 10; x += gridSizeStep) {
+      gridPoints.push(x, startY, 0);
+      gridPoints.push(x, endY, 0);
+    }
+
+    // Horizontal lines
+    for (let y = startY; y <= endY + gridSizeStep / 10; y += gridSizeStep) {
+      gridPoints.push(startX, y, 0);
+      gridPoints.push(endX, y, 0);
+    }
+
+    const gridGeometry = new THREE.BufferGeometry();
+    gridGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(gridPoints, 3)
+    );
+    const customGrid = new THREE.LineSegments(gridGeometry, gridMaterial);
+    scene.add(customGrid);
+
     // --- Setup Controls ---
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(centerX, centerY, 0);
