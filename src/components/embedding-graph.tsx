@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
@@ -21,10 +21,23 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(-1, -1));
+
+  const [hoveredPaper, setHoveredPaper] = useState<Paper | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
+
+    // Filter papers with valid embeddings
+    const validPapers = papers.filter(
+      (p) => p.embedding && p.embedding.length >= 2
+    );
 
     // --- Setup Scene ---
     const scene = new THREE.Scene();
@@ -47,21 +60,19 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     let minY = Infinity,
       maxY = -Infinity;
 
-    papers.forEach((paper) => {
-      if (paper.embedding && paper.embedding.length >= 2) {
-        // Use 1st and 2nd dimensions directly (no arbitrary scaling yet)
-        const x = paper.embedding[0];
-        const y = paper.embedding[1];
-        const z = 0;
+    validPapers.forEach((paper) => {
+      // Use 1st and 2nd dimensions directly (no arbitrary scaling yet)
+      const x = paper.embedding![0];
+      const y = paper.embedding![1];
+      const z = 0;
 
-        positions.push(x, y, z);
-        colors.push(1, 1, 1);
+      positions.push(x, y, z);
+      colors.push(1, 1, 1);
 
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
     });
 
     // Handle case with no data or single point
@@ -94,9 +105,6 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     const aspect = container.clientWidth / container.clientHeight;
 
     // Determine view size to fit the data
-    // We need to fit 'width' horizontally and 'height' vertically
-    // Ortho camera: left/right/top/bottom define the visible box
-
     let viewHeight = height;
     let viewWidth = height * aspect;
 
@@ -138,11 +146,7 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     scene.add(points);
 
     // --- Add Visual Helpers ---
-    // 1. Axes Helper (Removed as requested)
-    // const axesHelper = new THREE.AxesHelper(100);
-    // scene.add(axesHelper);
-
-    // 2. Custom Grid (Rectangular, bounded by data)
+    // Custom Grid (Rectangular, bounded by data)
     const gridSizeStep = 0.001;
     const gridColor = new THREE.Color(0x444444);
     const gridMaterial = new THREE.LineBasicMaterial({ color: gridColor });
@@ -195,12 +199,9 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
       const newAspect = container.clientWidth / container.clientHeight;
       const cam = cameraRef.current;
 
-      // Maintain the current vertical view size (zoom level essentially)
-      // but adjust horizontal to match aspect
       const currentHeight = cam.top - cam.bottom;
       const newWidth = currentHeight * newAspect;
 
-      // Standard way for resizing Ortho centered at target
       cam.left = -newWidth / 2;
       cam.right = newWidth / 2;
       cam.top = viewHeight / 2;
@@ -214,6 +215,64 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     };
 
     window.addEventListener("resize", handleResize);
+
+    // --- Interaction (Hover) ---
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!containerRef.current || !cameraRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      mouseRef.current.set(x, y);
+
+      raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+      // Calculate threshold in world units to match pixel size on screen
+      // Base point size is 6px. We use 8px for slightly easier targeting.
+      const cam = cameraRef.current;
+      const currentZoom = cam.zoom;
+      const viewWidth = (cam.right - cam.left) / currentZoom;
+      const worldPerPixel = viewWidth / rect.width;
+      const thresholdPixels = 8;
+      raycasterRef.current.params.Points.threshold =
+        thresholdPixels * worldPerPixel;
+
+      const intersects = raycasterRef.current.intersectObject(points);
+
+      if (intersects.length > 0) {
+        const index = intersects[0].index;
+        if (index !== undefined && index < validPapers.length) {
+          const paper = validPapers[index];
+          setHoveredPaper(paper);
+
+          // Get the position of the point itself for the popover
+          const pointPosition = new THREE.Vector3();
+          pointPosition.fromBufferAttribute(
+            geometry.attributes.position as THREE.BufferAttribute,
+            index
+          );
+
+          // Project to screen coordinates
+          pointPosition.project(cameraRef.current);
+
+          const screenX = (pointPosition.x * 0.5 + 0.5) * rect.width;
+          const screenY = (-(pointPosition.y * 0.5) + 0.5) * rect.height;
+
+          setPopoverPosition({
+            x: screenX,
+            y: screenY,
+          });
+          containerRef.current.style.cursor = "pointer";
+        }
+      } else {
+        setHoveredPaper(null);
+        setPopoverPosition(null);
+        containerRef.current.style.cursor = "default";
+      }
+    };
+
+    container.addEventListener("mousemove", handleMouseMove);
 
     // --- Animation Loop ---
     let animationId: number;
@@ -229,6 +288,7 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
     // --- Cleanup ---
     return () => {
       window.removeEventListener("resize", handleResize);
+      container.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(animationId);
       controls.dispose();
       if (rendererRef.current) {
@@ -241,13 +301,30 @@ export function EmbeddingGraph({ papers }: EmbeddingGraphProps) {
       }
       geometry.dispose();
       material.dispose();
+      gridGeometry.dispose();
+      gridMaterial.dispose();
     };
   }, [papers]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full bg-black rounded-lg overflow-hidden cursor-move"
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={containerRef}
+        className="w-full h-full bg-black rounded-lg overflow-hidden"
+      />
+      {hoveredPaper && popoverPosition && (
+        <div
+          className="absolute z-10 bg-white text-black p-2 rounded shadow-lg text-sm pointer-events-none border border-gray-200"
+          style={{
+            left: popoverPosition.x + 10,
+            top: popoverPosition.y + 10,
+            maxWidth: "200px",
+          }}
+        >
+          <div className="font-bold mb-1">{hoveredPaper.title}</div>
+          {/* <div className="text-xs text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">{hoveredPaper.url}</div> */}
+        </div>
+      )}
+    </div>
   );
 }
