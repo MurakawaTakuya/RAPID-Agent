@@ -1,3 +1,4 @@
+// TODO: src/app/api/papers/route.ts と役割が被ってるところがある
 import { db, schema } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -6,6 +7,10 @@ const CLOUD_RUN_URL = process.env.PYTHON_CLOUD_RUN_URL || "";
 interface Paper {
   url: string;
   title: string;
+  abstract?: string;
+  authors?: string;
+  conferenceName?: string;
+  conferenceYear?: number;
   embedding?: number[];
 }
 
@@ -66,12 +71,20 @@ export async function POST(request: NextRequest) {
             .values({
               url: paper.url,
               title: paper.title,
+              abstract: paper.abstract,
+              authors: paper.authors,
+              conferenceName: paper.conferenceName,
+              conferenceYear: paper.conferenceYear,
               embedding: paper.embedding,
             })
             .onConflictDoUpdate({
-              target: schema.papers.url,
+              target: schema.papers.title,
               set: {
-                title: paper.title,
+                url: paper.url,
+                abstract: paper.abstract,
+                authors: paper.authors,
+                conferenceName: paper.conferenceName,
+                conferenceYear: paper.conferenceYear,
                 embedding: paper.embedding,
               },
             });
