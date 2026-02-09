@@ -8,6 +8,13 @@
       "when": 1770107178763,
       "tag": "0000_youthful_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770630758740,
+      "tag": "0001_add_conference_columns",
+      "breakpoints": true
     }
   ]
 }

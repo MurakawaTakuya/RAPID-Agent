@@ -1,4 +1,5 @@
 import {
+  integer,
   pgTable,
   serial,
   text,
@@ -23,6 +24,8 @@ export const papers = pgTable("papers", {
   title: text("title").notNull(),
   abstract: text("abstract"),
   authors: text("authors"),
+  conferenceName: text("conference_name"),
+  conferenceYear: integer("conference_year"),
   embedding: vector("embedding", { dimensions: 768 }), // Gemini gemini-embedding-001 (output_dimensionality: 768)
   createdAt: timestamp("created_at").defaultNow(),
 });
