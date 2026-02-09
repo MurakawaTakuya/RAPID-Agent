@@ -20,8 +20,8 @@ export const users = pgTable("users", {
 // 論文テーブル（共有キャッシュ）
 export const papers = pgTable("papers", {
   id: serial("id").primaryKey(),
-  url: text("url").unique().notNull(),
-  title: text("title").notNull(),
+  url: text("url").notNull(),
+  title: text("title").unique().notNull(),
   abstract: text("abstract"),
   authors: text("authors"),
   conferenceName: text("conference_name"),
