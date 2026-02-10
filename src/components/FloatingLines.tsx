@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Clock,
   Mesh,
@@ -54,6 +54,8 @@ uniform vec2 parallaxOffset;
 
 uniform vec3 lineGradient[8];
 uniform int lineGradientCount;
+
+uniform bool isDarkMode;
 
 const vec3 BLACK = vec3(0.0);
 const vec3 PINK  = vec3(233.0, 71.0, 245.0) / 255.0;
@@ -127,6 +129,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   }
 
   vec3 col = vec3(0.0);
+  if (!isDarkMode) {
+    col = background_color(baseUv);
+  }
 
   vec3 b = lineGradientCount > 0 ? vec3(0.0) : background_color(baseUv);
 
@@ -189,6 +194,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         interactive
       ) * 0.1;
     }
+  }
+
+  if (!isDarkMode) {
+    float intensity = max(col.r, max(col.g, col.b));
+    intensity = min(intensity, 1.0);
+    col = vec3(1.0) - intensity + col;
+    col = mix(col, vec3(1.0), 0.3); // Make slightly brighter
   }
 
   fragColor = vec4(col, 1.0);
@@ -272,6 +284,53 @@ export default function FloatingLines({
   const rendererRef = useRef<WebGLRenderer | null>(null);
   const materialRef = useRef<ShaderMaterial | null>(null);
   const sceneRef = useRef<Scene | null>(null);
+
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      // Check if .dark class is present on html element
+      // Check system preference
+      const isSystemDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+
+      // Assume dark mode if .dark class is there, OR if system is dark AND .light is NOT there.
+      // This logic depends on how the app handles themes.
+      // Safe bet: if specific class .dark -> dark. if .light -> light. else system.
+      if (document.documentElement.classList.contains("dark")) {
+        setIsDarkMode(true);
+      } else if (document.documentElement.classList.contains("light")) {
+        setIsDarkMode(false);
+      } else {
+        setIsDarkMode(isSystemDark);
+      }
+    };
+
+    checkDarkMode();
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          checkDarkMode();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleMediaChange = () => checkDarkMode();
+    mediaQuery.addEventListener("change", handleMediaChange);
+
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener("change", handleMediaChange);
+    };
+  }, []);
 
   const targetMouseRef = useRef<Vector2>(new Vector2(-1000, -1000));
   const currentMouseRef = useRef<Vector2>(new Vector2(-1000, -1000));
@@ -405,6 +464,8 @@ export default function FloatingLines({
         ),
       },
       lineGradientCount: { value: 0 },
+
+      isDarkMode: { value: isDarkMode },
     };
 
     if (linesGradient && linesGradient.length > 0) {
@@ -553,7 +614,15 @@ export default function FloatingLines({
         renderer.domElement.parentElement.removeChild(renderer.domElement);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Initialization run only once
+
+  // Update isDarkMode uniform
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.isDarkMode.value = isDarkMode;
+    }
+  }, [isDarkMode]);
 
   // Separate useEffects for property updates
 
@@ -651,12 +720,16 @@ export default function FloatingLines({
     bottomLineDistance,
   ]);
 
+  // Decide mixBlendMode effectively
+  const effectiveMixBlendMode =
+    mixBlendMode === "screen" && !isDarkMode ? "multiply" : mixBlendMode;
+
   return (
     <div
       ref={containerRef}
       className="w-full h-full relative overflow-hidden floating-lines-container"
       style={{
-        mixBlendMode: mixBlendMode,
+        mixBlendMode: effectiveMixBlendMode,
       }}
     />
   );
