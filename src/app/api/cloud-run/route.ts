@@ -1,4 +1,5 @@
 // TODO: src/app/api/papers/route.ts と役割が被ってるところがある
+// TODO: 廃止予定
 import { db } from "@/lib/db";
 import { upsertPaper } from "@/services/papers";
 import { NextRequest, NextResponse } from "next/server";
