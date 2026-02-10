@@ -71,9 +71,7 @@
         "papers_title_unique": {
           "name": "papers_title_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "title"
-          ]
+          "columns": ["title"]
         }
       },
       "policies": {},
