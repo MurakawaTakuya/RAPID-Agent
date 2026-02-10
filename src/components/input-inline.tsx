@@ -164,6 +164,11 @@ export function InputInline() {
           placeholder="学会と年を選択..."
           onValueChange={setSelectedConferences}
           value={selectedConferences}
+          responsive={{
+            mobile: { maxCount: 5 },
+            tablet: { maxCount: 7 },
+            desktop: { maxCount: 9 },
+          }}
           className="w-full"
         />
       </div>
