@@ -291,7 +291,7 @@ export function InputInline() {
                         className="rounded border-gray-300 cursor-pointer"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground w-1/4">
                       タイトル
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground whitespace-nowrap w-32">
@@ -300,10 +300,10 @@ export function InputInline() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Abstract
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground w-20">
+                    <th className="px-1 py-3 text-center text-sm font-medium text-muted-foreground w-12">
                       Link
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground w-20">
+                    <th className="px-1 py-3 text-center text-sm font-medium text-muted-foreground w-12">
                       削除
                     </th>
                   </tr>
@@ -325,7 +325,7 @@ export function InputInline() {
                         />
                       </td>
                       <td className="px-4 py-4">
-                        <div className="font-medium text-sm text-card-foreground line-clamp-2">
+                        <div className="font-medium text-sm text-card-foreground line-clamp-4">
                           {paper.title}
                         </div>
                       </td>
@@ -338,12 +338,12 @@ export function InputInline() {
                       </td>
                       <td className="px-4 py-4">
                         {paper.abstract && (
-                          <div className="text-sm text-muted-foreground line-clamp-2 max-w-md">
+                          <div className="text-sm text-muted-foreground line-clamp-4">
                             {paper.abstract}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-1 py-4 text-center">
                         <a
                           href={paper.url.startsWith("http") ? paper.url : "#"}
                           target="_blank"
@@ -369,7 +369,7 @@ export function InputInline() {
                           </svg>
                         </a>
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-1 py-4 text-center">
                         <button
                           onClick={() => handleDeletePaper(paper.id)}
                           className="inline-flex items-center justify-center p-2 hover:bg-destructive/10 rounded-md transition-colors group"
