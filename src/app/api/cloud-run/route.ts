@@ -1,11 +1,12 @@
 import { papers } from "@/db/schema";
+import { getUserIdFromRequest } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader) {
+  const userId = await getUserIdFromRequest(request);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -525,18 +525,18 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       return "";
     };
 
-    const getAllOptions = React.useCallback((): MultiSelectOption[] => {
+    const allOptions = React.useMemo((): MultiSelectOption[] => {
       if (options.length === 0) return [];
-      let allOptions: MultiSelectOption[];
+      let flattedOptions: MultiSelectOption[];
       if (isGroupedOptions(options)) {
-        allOptions = options.flatMap((group) => group.options);
+        flattedOptions = options.flatMap((group) => group.options);
       } else {
-        allOptions = options;
+        flattedOptions = options;
       }
       const valueSet = new Set<string>();
       const duplicates: string[] = [];
       const uniqueOptions: MultiSelectOption[] = [];
-      allOptions.forEach((option) => {
+      flattedOptions.forEach((option) => {
         if (valueSet.has(option.value)) {
           duplicates.push(option.value);
           if (!deduplicateOptions) {
@@ -562,12 +562,20 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             }`
         );
       }
-      return deduplicateOptions ? uniqueOptions : allOptions;
+      return deduplicateOptions ? uniqueOptions : flattedOptions;
     }, [options, deduplicateOptions, isGroupedOptions]);
+
+    const optionMap = React.useMemo(() => {
+      const map = new Map<string, MultiSelectOption>();
+      allOptions.forEach((option) => {
+        map.set(option.value, option);
+      });
+      return map;
+    }, [allOptions]);
 
     const getOptionByValue = React.useCallback(
       (value: string): MultiSelectOption | undefined => {
-        const option = getAllOptions().find((option) => option.value === value);
+        const option = optionMap.get(value);
         if (!option && process.env.NODE_ENV === "development") {
           console.warn(
             `MultiSelect: Option with value "${value}" not found in options list`
@@ -575,7 +583,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         }
         return option;
       },
-      [getAllOptions]
+      [optionMap]
     );
 
     const filteredOptions = React.useMemo(() => {
@@ -652,8 +660,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
     const toggleAll = () => {
       if (disabled) return;
-      const allOptions = getAllOptions().filter((option) => !option.disabled);
-      if (selectedValues.length === allOptions.length) {
+      const optionsToSelect = allOptions.filter((option) => !option.disabled);
+      if (selectedValues.length === optionsToSelect.length) {
         handleClear();
       } else {
         const allValues = allOptions.map((option) => option.value);
@@ -698,7 +706,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
     React.useEffect(() => {
       const selectedCount = selectedValues.length;
-      const allOptions = getAllOptions();
       const totalOptions = allOptions.filter((opt) => !opt.disabled).length;
       if (selectedCount !== prevSelectedCount.current) {
         const diff = selectedCount - prevSelectedCount.current;
@@ -757,7 +764,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         }
         prevSearchValue.current = searchValue;
       }
-    }, [selectedValues, isPopoverOpen, searchValue, announce, getAllOptions]);
+    }, [selectedValues, isPopoverOpen, searchValue, announce, allOptions]);
 
     return (
       <>
@@ -802,7 +809,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               aria-controls={isPopoverOpen ? listboxId : undefined}
               aria-describedby={`${triggerDescriptionId} ${selectedCountId}`}
               aria-label={`Multi-select: ${selectedValues.length} of ${
-                getAllOptions().length
+                allOptions.length
               } options selected. ${placeholder}`}
               className={cn(
                 "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
@@ -1060,19 +1067,16 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       role="option"
                       aria-selected={
                         selectedValues.length ===
-                        getAllOptions().filter((opt) => !opt.disabled).length
+                        allOptions.filter((opt) => !opt.disabled).length
                       }
-                      aria-label={`Select all ${
-                        getAllOptions().length
-                      } options`}
+                      aria-label={`Select all ${allOptions.length} options`}
                       className="cursor-pointer"
                     >
                       <div
                         className={cn(
                           "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                           selectedValues.length ===
-                            getAllOptions().filter((opt) => !opt.disabled)
-                              .length
+                            allOptions.filter((opt) => !opt.disabled).length
                             ? "bg-primary text-primary-foreground"
                             : "opacity-50 [&_svg]:invisible"
                         )}
@@ -1082,8 +1086,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       </div>
                       <span>
                         (Select All
-                        {getAllOptions().length > 20
-                          ? ` - ${getAllOptions().length} options`
+                        {allOptions.length > 20
+                          ? ` - ${allOptions.length} options`
                           : ""}
                         )
                       </span>
