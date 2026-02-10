@@ -5,19 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
-import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 interface Paper {
+  id: number;
   title: string;
   url: string;
-  embedding?: number[];
+  abstract: string | null;
+  conferenceName: string | null;
+  conferenceYear: number | null;
 }
 
 interface SearchResult {
-  papers: Paper[];
+  conferences: string[];
   keyword: string;
-  uid: string;
+  papers: Paper[];
+  count: number;
+  message: string;
   error?: string;
 }
 
@@ -93,12 +97,6 @@ export function InputInline() {
   const handleSearch = async () => {
     if (!user) return;
 
-    // For now, just console log the values (backend will be implemented separately)
-    console.log({
-      selectedConferences,
-      keyword,
-    });
-
     setError(null);
     setResult(null);
 
@@ -108,11 +106,6 @@ export function InputInline() {
       return;
     }
 
-    // TODO: Backend integration will be added later
-    // For now, show a message
-    setError("バックエンド処理は別途実装予定です");
-
-    /* Original API call - will be reconnected later
     setLoading(true);
     try {
       const token = await user.getIdToken();
@@ -122,9 +115,9 @@ export function InputInline() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           conferences: selectedConferences,
-          keyword 
+          keyword,
         }),
       });
 
@@ -134,8 +127,6 @@ export function InputInline() {
           setResult(data);
         } else if (data.error) {
           setError(data.error);
-        } else if (data.message) {
-          setError(data.message);
         } else {
           setError("予期しないレスポンス形式です");
         }
@@ -151,7 +142,6 @@ export function InputInline() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   return (
@@ -216,28 +206,35 @@ export function InputInline() {
       {/* Results Display */}
       {result && result.papers && result.papers.length > 0 && (
         <div className="max-w-3xl w-full space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Found {result.papers.length} papers for &quot;{result.keyword}&quot;
-          </p>
+          <p className="text-sm text-muted-foreground">{result.message}</p>
           <div className="grid gap-3">
-            {result.papers.map((paper, index) => (
+            {result.papers.map((paper) => (
               <a
-                key={index}
+                key={paper.id}
                 href={paper.url.startsWith("http") ? paper.url : "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2 flex-1">
                       {paper.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      {paper.url}
-                    </p>
+                    {(paper.conferenceName || paper.conferenceYear) && (
+                      <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                        {paper.conferenceName} {paper.conferenceYear}
+                      </div>
+                    )}
                   </div>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
+                  {paper.abstract && (
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {paper.abstract}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground truncate">
+                    {paper.url}
+                  </p>
                 </div>
               </a>
             ))}
@@ -248,7 +245,7 @@ export function InputInline() {
       {result && result.papers && result.papers.length === 0 && (
         <div className="max-w-3xl w-full p-4 rounded-lg border bg-muted/50">
           <p className="text-sm text-muted-foreground">
-            No papers found for &quot;{result.keyword}&quot;
+            結果が見つかりませんでした
           </p>
         </div>
       )}
