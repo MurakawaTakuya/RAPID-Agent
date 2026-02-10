@@ -134,12 +134,6 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    @include dark-vars;
-  }
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -169,10 +163,8 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+.dark {
+  color-scheme: dark;
 }
 
 ::view-transition-old(root),

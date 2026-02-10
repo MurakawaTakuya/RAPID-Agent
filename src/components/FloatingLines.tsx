@@ -289,22 +289,7 @@ export default function FloatingLines({
 
   useEffect(() => {
     const checkDarkMode = () => {
-      // Check if .dark class is present on html element
-      // Check system preference
-      const isSystemDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-
-      // Assume dark mode if .dark class is there, OR if system is dark AND .light is NOT there.
-      // This logic depends on how the app handles themes.
-      // Safe bet: if specific class .dark -> dark. if .light -> light. else system.
-      if (document.documentElement.classList.contains("dark")) {
-        setIsDarkMode(true);
-      } else if (document.documentElement.classList.contains("light")) {
-        setIsDarkMode(false);
-      } else {
-        setIsDarkMode(isSystemDark);
-      }
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
     };
 
     checkDarkMode();
@@ -322,13 +307,8 @@ export default function FloatingLines({
       attributeFilter: ["class"],
     });
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleMediaChange = () => checkDarkMode();
-    mediaQuery.addEventListener("change", handleMediaChange);
-
     return () => {
       observer.disconnect();
-      mediaQuery.removeEventListener("change", handleMediaChange);
     };
   }, []);
 
