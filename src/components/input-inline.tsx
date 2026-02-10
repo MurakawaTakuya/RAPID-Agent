@@ -92,6 +92,7 @@ export function InputInline() {
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedPapers, setSelectedPapers] = useState<Set<number>>(new Set());
   const { user } = useAuth();
 
   const handleSearch = async () => {
@@ -99,6 +100,7 @@ export function InputInline() {
 
     setError(null);
     setResult(null);
+    setSelectedPapers(new Set()); // Reset selection on new search
 
     // Validation: Conference selection is required
     if (selectedConferences.length === 0) {
@@ -142,6 +144,60 @@ export function InputInline() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePaperSelection = (paperId: number) => {
+    setSelectedPapers((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(paperId)) {
+        newSet.delete(paperId);
+      } else {
+        newSet.add(paperId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!result?.papers) return;
+
+    if (selectedPapers.size === result.papers.length) {
+      setSelectedPapers(new Set());
+    } else {
+      setSelectedPapers(new Set(result.papers.map((p) => p.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (!result?.papers) return;
+
+    const remainingPapers = result.papers.filter(
+      (paper) => !selectedPapers.has(paper.id)
+    );
+    setResult({
+      ...result,
+      papers: remainingPapers,
+      count: remainingPapers.length,
+    });
+    setSelectedPapers(new Set());
+  };
+
+  const handleDeletePaper = (paperId: number) => {
+    if (!result?.papers) return;
+
+    const remainingPapers = result.papers.filter(
+      (paper) => paper.id !== paperId
+    );
+    setResult({
+      ...result,
+      papers: remainingPapers,
+      count: remainingPapers.length,
+    });
+    setSelectedPapers((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(paperId);
+      return newSet;
+    });
   };
 
   return (
@@ -205,39 +261,145 @@ export function InputInline() {
 
       {/* Results Display */}
       {result && result.papers && result.papers.length > 0 && (
-        <div className="max-w-3xl w-full space-y-3">
-          <p className="text-sm text-muted-foreground">{result.message}</p>
-          <div className="grid gap-3">
-            {result.papers.map((paper) => (
-              <a
-                key={paper.id}
-                href={paper.url.startsWith("http") ? paper.url : "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group"
+        <div className="max-w-7xl w-full space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{result.message}</p>
+            {selectedPapers.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteSelected}
               >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-medium text-card-foreground group-hover:text-primary transition-colors line-clamp-2 flex-1">
-                      {paper.title}
-                    </h3>
-                    {(paper.conferenceName || paper.conferenceYear) && (
-                      <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                        {paper.conferenceName} {paper.conferenceYear}
-                      </div>
-                    )}
-                  </div>
-                  {paper.abstract && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {paper.abstract}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground truncate">
-                    {paper.url}
-                  </p>
-                </div>
-              </a>
-            ))}
+                選択した{selectedPapers.size}件を削除
+              </Button>
+            )}
+          </div>
+
+          <div className="border rounded-lg overflow-hidden bg-card">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr className="border-b">
+                    <th className="w-12 px-4 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={
+                          result.papers.length > 0 &&
+                          selectedPapers.size === result.papers.length
+                        }
+                        onChange={toggleSelectAll}
+                        className="rounded border-gray-300 cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      タイトル
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground whitespace-nowrap w-32">
+                      Conference
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Abstract
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground w-20">
+                      Link
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground w-20">
+                      削除
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {result.papers.map((paper) => (
+                    <tr
+                      key={paper.id}
+                      className={`hover:bg-accent/50 transition-colors ${
+                        selectedPapers.has(paper.id) ? "bg-accent/30" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedPapers.has(paper.id)}
+                          onChange={() => togglePaperSelection(paper.id)}
+                          className="rounded border-gray-300 cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-sm text-card-foreground line-clamp-2">
+                          {paper.title}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {(paper.conferenceName || paper.conferenceYear) && (
+                          <div className="text-sm text-muted-foreground whitespace-nowrap">
+                            {paper.conferenceName} {paper.conferenceYear}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {paper.abstract && (
+                          <div className="text-sm text-muted-foreground line-clamp-2 max-w-md">
+                            {paper.abstract}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <a
+                          href={paper.url.startsWith("http") ? paper.url : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center p-2 hover:bg-accent rounded-md transition-colors"
+                          title="新しいタブで開く"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          onClick={() => handleDeletePaper(paper.id)}
+                          className="inline-flex items-center justify-center p-2 hover:bg-destructive/10 rounded-md transition-colors group"
+                          title="削除"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-muted-foreground group-hover:text-destructive"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
