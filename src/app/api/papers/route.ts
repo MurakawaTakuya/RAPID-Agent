@@ -1,4 +1,5 @@
 import { db, schema } from "@/lib/db";
+import { upsertPaper } from "@/services/papers";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -80,34 +81,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await db
-      .insert(schema.papers)
-      .values({
-        url,
-        title,
-        abstract,
-        authors,
-        embedding,
-      })
-      .onConflictDoUpdate({
-        target: schema.papers.url,
-        set: {
-          title,
-          abstract,
-          authors,
-          embedding,
-        },
-      })
-      .returning({
-        id: schema.papers.id,
-        url: schema.papers.url,
-        title: schema.papers.title,
-        abstract: schema.papers.abstract,
-        authors: schema.papers.authors,
-        createdAt: schema.papers.createdAt,
-      });
+    const result = await upsertPaper({
+      url,
+      title,
+      abstract,
+      authors,
+      embedding,
+    });
 
-    return NextResponse.json(result[0], { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Error creating paper:", error);
     return NextResponse.json(

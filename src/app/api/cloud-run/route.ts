@@ -1,5 +1,6 @@
 // TODO: src/app/api/papers/route.ts と役割が被ってるところがある
-import { db, schema } from "@/lib/db";
+import { db } from "@/lib/db";
+import { upsertPaper } from "@/services/papers";
 import { NextRequest, NextResponse } from "next/server";
 
 const CLOUD_RUN_URL = process.env.PYTHON_CLOUD_RUN_URL || "";
@@ -47,7 +48,6 @@ export async function POST(request: NextRequest) {
 
     // Save papers to database with sequential processing to avoid excessive parallel connections
     if (db && data.papers && Array.isArray(data.papers)) {
-      const dbClient = db;
       let savedCount = 0;
       let failedCount = 0;
 
@@ -66,36 +66,19 @@ export async function POST(request: NextRequest) {
       // Process papers sequentially to avoid excessive DB connections
       for (const paper of validPapers) {
         try {
-          await dbClient
-            .insert(schema.papers)
-            .values({
-              url: paper.url,
-              title: paper.title,
-              abstract: paper.abstract,
-              authors: paper.authors,
-              conferenceName: paper.conferenceName,
-              conferenceYear: paper.conferenceYear,
-              embedding: paper.embedding,
-            })
-            .onConflictDoUpdate({
-              target: schema.papers.title,
-              set: {
-                url: paper.url,
-                abstract: paper.abstract,
-                authors: paper.authors,
-                conferenceName: paper.conferenceName,
-                conferenceYear: paper.conferenceYear,
-                embedding: paper.embedding,
-              },
-            });
-          savedCount++;
-        } catch (dbError) {
-          failedCount++;
-          console.error("Error saving paper:", {
+          await upsertPaper({
+            url: paper.url,
             title: paper.title,
-            url: paper.url.substring(0, 50),
-            error: dbError instanceof Error ? dbError.message : String(dbError),
+            abstract: paper.abstract,
+            authors: paper.authors,
+            conferenceName: paper.conferenceName,
+            conferenceYear: paper.conferenceYear,
+            embedding: paper.embedding,
           });
+          savedCount++;
+        } catch {
+          failedCount++;
+          // Error logging is handled in upsertPaper, but we count failures here
         }
       }
 
