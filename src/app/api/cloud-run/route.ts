@@ -1,7 +1,4 @@
-import { papers } from "@/db/schema";
 import { getUserIdFromRequest } from "@/lib/auth-server";
-import { db } from "@/lib/db";
-import { inArray } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -29,43 +26,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate sample numeric array (1000-1100) - these will be used as paper IDs
-    const paperIds: number[] = [];
-    for (let i = 1000; i <= 1100; i++) {
-      paperIds.push(i);
-    }
-
-    // Check if database is available
-    if (!db) {
+    const cloudRunUrl = process.env.PYTHON_CLOUD_RUN_URL;
+    if (!cloudRunUrl) {
+      console.error("PYTHON_CLOUD_RUN_URL is not set");
       return NextResponse.json(
-        { error: "Database not available" },
+        { error: "Configuration Error" },
         { status: 500 }
       );
     }
 
-    // Fetch papers from database using the IDs
-    const fetchedPapers = await db
-      .select({
-        id: papers.id,
-        title: papers.title,
-        url: papers.url,
-        abstract: papers.abstract,
-        conferenceName: papers.conferenceName,
-        conferenceYear: papers.conferenceYear,
-      })
-      .from(papers)
-      .where(inArray(papers.id, paperIds));
+    console.log(`Forwarding request to Cloud Run: ${cloudRunUrl}`);
 
-    console.log(`Fetched ${fetchedPapers.length} papers from database`);
-
-    // Return the results
-    return NextResponse.json({
-      conferences,
-      keyword,
-      papers: fetchedPapers,
-      count: fetchedPapers.length,
-      message: `Found ${fetchedPapers.length} papers for ${conferences.length} conference(s)${keyword ? ` and keyword "${keyword}"` : ""}`,
+    // Forward request to Python Cloud Run service
+    const response = await fetch(cloudRunUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: request.headers.get("Authorization") || "",
+      },
+      body: JSON.stringify({ conferences, keyword }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Cloud Run error (${response.status}):`, errorText);
+      return NextResponse.json(
+        { error: `Cloud Run Error: ${response.statusText}` },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    console.log(`Received response from Cloud Run:`, data);
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json(

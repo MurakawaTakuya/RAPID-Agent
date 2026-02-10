@@ -16,7 +16,7 @@ cloudrun/
 
 ```bash
 cd cloudrun
-gcloud run deploy paper-agent-api --source . --region asia-northeast1 --project $PROJECT_ID --allow-unauthenticated --timeout=300
+gcloud run deploy paper-agent-api --source . --region asia-northeast1 --project $PROJECT_ID --allow-unauthenticated --timeout=300 --set-env-vars DATABASE_URL="DB_URL"
 ```
 
 ## サービス情報

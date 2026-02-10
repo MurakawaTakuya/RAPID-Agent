@@ -8,6 +8,9 @@ import firebase_admin
 from firebase_admin import auth
 from google import genai
 from google.genai import types
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
 
 # Configure logging for Cloud Run
 logging.basicConfig(
@@ -31,7 +34,14 @@ app = Flask(__name__)
 # On Cloud Run, it automatically uses the service account credentials
 firebase_admin.initialize_app()
 
-# System instruction for JSON-only output
+def get_db_connection():
+    """Create a database connection"""
+    try:
+        conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+        return conn
+    except Exception as e:
+        logger.error(f"Error connecting to database: {e}")
+        return None
 SEARCH_SYSTEM_INSTRUCTION = """
 あなたは論文検索アシスタントです。ユーザーのキーワードについて最新情報を検索し、関連する論文をリストアップしてください。
 
@@ -101,22 +111,13 @@ def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
 
 @app.route("/", methods=["POST"])
 def search():
-    # Initialize Genai Client
-    client = genai.Client(
-        vertexai=True,
-        project=os.environ.get("GOOGLE_CLOUD_PROJECT", ""),
-        location=os.environ.get("VERTEX_AI_LOCATION", "asia-northeast1")
-    )
-    model_id = "gemini-2.5-flash"
+    request_id = None
+    uid = None
     
-    request_id, uid, keyword = None, None, None
+    # Auth check
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        log_structured(
-            "WARNING", 
-            "Unauthorized request", 
-            error="No token provided"
-        )
+        log_structured("WARNING", "Unauthorized request", error="No token provided")
         return jsonify({"error": "Unauthorized: No token provided"}), 401
 
     token = auth_header.split("Bearer ")[1]
@@ -127,92 +128,73 @@ def search():
         
         data = request.get_json()
         keyword = data.get("keyword", "") if data else ""
-        
-        if not keyword:
-            log_structured("INFO", "Empty keyword received", uid=uid)
-            return jsonify({
-                "papers": [],
-                "keyword": "",
-                "uid": uid,
-                "message": "キーワードを入力してください"
-            })
-        
-        # Use Google Search grounding + URL context
-        tools = [
-            types.Tool(google_search=types.GoogleSearch()),
-            types.Tool(url_context=types.UrlContext())
-        ]
-        
-        config = types.GenerateContentConfig(
-            tools=tools,
-            system_instruction=SEARCH_SYSTEM_INSTRUCTION,
-            # Note: response_mime_type cannot be used with URL Context tool
-        )
-        
-        # Generate request ID for log correlation
-        request_id = str(uuid.uuid4())[:8]
+        conferences = data.get("conferences", []) if data else []
         
         # Log the request
+        request_id = str(uuid.uuid4())[:8]
         log_structured(
             "INFO", 
-            f"Generating content: {request_id}", 
+            f"Processing request: {request_id}", 
             uid=uid, 
             keyword=keyword,
-            model=model_id
+            conferences=conferences
         )
         
-        response = client.models.generate_content(
-            model=model_id,
-            contents=keyword,
-            config=config,
-        )
-        
-        # Extract text from response
-        ai_response = response.text
-        
-        # Parse JSON response
-        parsed_response = extract_json_from_response(ai_response)
-        
-        if not parsed_response or "papers" not in parsed_response:
-            log_structured(
-                "WARNING",
-                f"Failed to parse LLM response: {request_id}",
-                raw_response=ai_response[:500]
-            )
-            return jsonify({
-                "error": "論文リストの取得に失敗しました",
-                "raw_response": ai_response
-            }), 500
-        
-        papers = parsed_response.get("papers", [])
-        
-        # Generate embeddings for paper titles
-        if papers:
-            titles = [paper.get("title", "") for paper in papers]
-            embeddings = generate_embeddings(client, titles)
+        # Connect to DB
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
             
-            # Add embeddings to papers
-            for i, paper in enumerate(papers):
-                if i < len(embeddings):
-                    paper["embedding"] = embeddings[i]
-        
-        # Log successful response
-        log_structured(
-            "INFO",
-            f"Content generated successfully: {request_id}",
-            request_id=request_id,
-            uid=uid,
-            keyword=keyword,
-            papers_count=len(papers)
-        )
-        
-        return jsonify({
-            "papers": papers,
-            "keyword": keyword,
-            "uid": uid,
-        })
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Fetch papers with ID between 1000 and 1100
+                # Note: In a real scenario, we would use filtering based on keyword and conferences here.
+                # For now, as requested, we strictly return IDs 1000-1100.
+                query = """
+                    SELECT 
+                        id, 
+                        title, 
+                        url, 
+                        abstract, 
+                        conference_name, 
+                        conference_year 
+                    FROM papers 
+                    WHERE id BETWEEN 1000 AND 1100
+                """
+                cur.execute(query)
+                rows = cur.fetchall()
+                
+                # Convert to camelCase for frontend compatibility
+                papers = []
+                for row in rows:
+                    papers.append({
+                        "id": row["id"],
+                        "title": row["title"],
+                        "url": row["url"],
+                        "abstract": row["abstract"],
+                        "conferenceName": row["conference_name"],
+                        "conferenceYear": row["conference_year"]
+                    })
+                
+                log_structured(
+                    "INFO",
+                    f"Fetched {len(papers)} papers",
+                    request_id=request_id,
+                    count=len(papers)
+                )
+                
+                return jsonify({
+                    "conferences": conferences,
+                    "keyword": keyword,
+                    "papers": papers,
+                    "count": len(papers),
+                    "message": f"Found {len(papers)} papers (ID 1000-1100)"
+                })
+                
+        finally:
+            conn.close()
+
     except Exception as e:
-        # Log error
         log_structured(
             "ERROR", 
             f"Error processing request: {request_id or 'N/A'}",
