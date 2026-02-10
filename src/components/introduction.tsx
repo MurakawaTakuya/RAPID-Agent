@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
 import FloatingLines from "./FloatingLines";
 import { AnimatedGradientText } from "./ui/animated-gradient-text";
+import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 import { MagicCard } from "./ui/magic-card";
 
 export function Introduction() {
@@ -12,6 +13,7 @@ export function Introduction() {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen w-full px-4 text-center space-y-8 animate-in fade-in duration-700 overflow-hidden">
+      <AnimatedThemeToggler className="fixed top-4 right-4 z-50" />
       <div className="fixed top-0 left-0 w-full h-full -z-10 bg-background">
         <FloatingLines
           enabledWaves={["top", "bottom", "middle"]}
