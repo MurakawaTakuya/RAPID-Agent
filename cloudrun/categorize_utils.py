@@ -159,7 +159,13 @@ def categorize_papers(
         "other": [{paperX}, {paperY}, ...]  # どのカテゴリにも該当しなかった論文
     }
 
-    Output example:
+    複数カテゴリに該当する場合への対応：
+    各paper dictには"categories"キーが追加され，分類されたカテゴリのタイトルをリストで持つ．
+        e.g. "categories": ["教師あり学習", "ゼロショット学習"]
+    "other"には"categories"が空のpaperを割り当てる.
+        e.g. "categories": []
+
+    出力例:
     {
         "info": {
             "title": "学習設定",
@@ -169,7 +175,11 @@ def categorize_papers(
                 ...
             ]
         },
-        "教師あり学習": [paper1, paper2, ...],
+        "教師あり学習": [
+            {"id": 123, "title": "論文タイトル1", "categories": ["教師あり学習", "ゼロショット学習"], ...},
+            paper2,
+            ...
+        ],
         "弱教師あり学習": [paper3, paper4, ...],
         ...
         "other": [paperX, paperY, ...]
@@ -187,14 +197,15 @@ def categorize_papers(
         "info": categorize_info,
     }
     for q_emb, category in zip(query_embeddings, categorize_info["categories"]):
+        category_title = category["title"]
         papers = _fetch_simillar_papers(
             original_papers,
             query_embedding=q_emb,
             threshold=threshold,
         )
         for paper in papers:
-            paper["categories"].append(category)
-        result[category["title"]] = papers
+            paper["categories"].append(category_title)
+        result[category_title] = papers
 
     other_papers = [
         paper for paper in original_papers if len(paper.categories) == 0
