@@ -150,13 +150,29 @@ def categorize_papers(
     threshold: float = 0.65
 ):
     """
-    Output example:
+    Output:
     {
         "info": {...},  # categorize_infoと同じ形式
-        "教師あり学習": [{paper1}, {paper2}, ...],
-        "弱教師あり学習": [{paper3}, {paper4}, ...],
+        "{category1['title']}": [{paper1}, {paper2}, ...],
+        "{category2['title']}": [{paper3}, {paper4}, ...],
         ...
         "other": [{paperX}, {paperY}, ...]  # どのカテゴリにも該当しなかった論文
+    }
+
+    Output example:
+    {
+        "info": {
+            "title": "学習設定",
+            "categories": [
+                {"title": "教師あり学習", "content": "ラベル付き..."},
+                {"title": "弱教師あり学習", "content": "不完全・不..."},
+                ...
+            ]
+        },
+        "教師あり学習": [paper1, paper2, ...],
+        "弱教師あり学習": [paper3, paper4, ...],
+        ...
+        "other": [paperX, paperY, ...]
     }
     """
 
