@@ -8,6 +8,7 @@ import firebase_admin
 from firebase_admin import auth
 from google import genai
 from google.genai import types
+from google.genai.types import EmbedContentConfig
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -33,6 +34,7 @@ app = Flask(__name__)
 # Initialize Firebase Admin SDK
 # On Cloud Run, it automatically uses the service account credentials
 firebase_admin.initialize_app()
+
 
 def get_db_connection():
     """Create a database connection"""
@@ -80,40 +82,46 @@ def extract_json_from_response(text: str) -> dict | None:
     return None
 
 
-# TDDO: 一度にembeddingできるのは最大で250個までの可能性あり
-def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a list of texts using Gemini embedding model
+def init_genai_client():
+    """Initialize GenAI client for Vertex AI (Cloud Run)"""
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    location = os.environ.get("GOOGLE_CLOUD_LOCATION")
     
-    Handles batching automatically if more than 250 texts are provided.
-    """
-    if not texts:
-        return []
-    
-    BATCH_SIZE = 250
-    all_embeddings = []
-    
-    # Process in batches of 250
-    for i in range(0, len(texts), BATCH_SIZE):
-        batch = texts[i:i + BATCH_SIZE]
-        result = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=batch,
-            config={
-                "output_dimensionality": 768,  # Match DB schema (768 dimensions)
-                "task_type": "CLUSTERING",  # Optimized for similarity-based grouping
-            },
-        )
-        all_embeddings.extend([e.values for e in result.embeddings])
-    
-    return all_embeddings
+    if not project or not location:
+        message = "GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_LOCATION is not set. These are required for Vertex AI initialization."
+        log_structured("ERROR", message)
+        raise ValueError(message)
 
+    log_structured("INFO", "Initializing Vertex AI Client", project=project, location=location)
+    return genai.Client(
+        vertexai=True,
+        project=project,
+        location=location
+    )
+
+
+def generate_query_embedding(
+    client: genai.Client, query: str
+) -> list[float]:
+
+    # client is passed from caller, do not re-initialize
+    response = client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=[query],
+        config=EmbedContentConfig(
+            task_type="RETRIEVAL_QUERY",
+            output_dimensionality=768,
+        ),
+    )
+    return response.embeddings[0].values
 
 
 @app.route("/", methods=["POST"])
 def search():
     request_id = None
     uid = None
-    
+    keyword = ""
+
     # Auth check
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -121,15 +129,25 @@ def search():
         return jsonify({"error": "Unauthorized: No token provided"}), 401
 
     token = auth_header.split("Bearer ")[1]
-    
+
     try:
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token['uid']
-        
+
         data = request.get_json()
         keyword = data.get("keyword", "") if data else ""
-        conferences = data.get("conferences", []) if data else []
         
+        if not keyword or not isinstance(keyword, str) or not keyword.strip():
+            log_structured("WARNING", "Invalid keyword provided", keyword=keyword)
+            return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
+
+        conferences = data.get("conferences", []) if data else []
+        similarity_threshold = 0.7
+
+        # Initialize Client (API Key or Vertex AI)
+        client = init_genai_client()
+        input_embedding = generate_query_embedding(client, keyword)
+
         # Log the request
         request_id = str(uuid.uuid4())[:8]
         log_structured(
@@ -147,21 +165,34 @@ def search():
             
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # Fetch papers with ID between 1000 and 1100
-                # Note: In a real scenario, we would use filtering based on keyword and conferences here.
-                # For now, as requested, we strictly return IDs 1000-1100.
+                input_embedding_vector = json.dumps(input_embedding)
+                # Use CTE and inner LIMIT to optimize vector search
                 query = """
-                    SELECT 
-                        id, 
-                        title, 
-                        url, 
-                        abstract, 
-                        conference_name, 
-                        conference_year 
-                    FROM papers 
-                    WHERE id BETWEEN 1000 AND 1100
+                    WITH query_vec AS (
+                        SELECT %s::vector AS q
+                    )
+                    SELECT * FROM (
+                        SELECT
+                            id,
+                            title,
+                            url,
+                            abstract,
+                            conference_name,
+                            conference_year,
+                            1 - (papers.embedding <=> query_vec.q) AS cosine_similarity
+                        FROM papers, query_vec
+                        ORDER BY papers.embedding <=> query_vec.q ASC
+                        LIMIT 500
+                    ) sub
+                    WHERE cosine_similarity >= %s;
                 """
-                cur.execute(query)
+                cur.execute(
+                    query,
+                    (
+                        input_embedding_vector,
+                        similarity_threshold,
+                    ),
+                )
                 rows = cur.fetchall()
                 
                 # Convert to camelCase for frontend compatibility
@@ -173,7 +204,8 @@ def search():
                         "url": row["url"],
                         "abstract": row["abstract"],
                         "conferenceName": row["conference_name"],
-                        "conferenceYear": row["conference_year"]
+                        "conferenceYear": row["conference_year"],
+                        "cosineSimilarity": float(row["cosine_similarity"]),
                     })
                 
                 log_structured(
@@ -188,7 +220,11 @@ def search():
                     "keyword": keyword,
                     "papers": papers,
                     "count": len(papers),
-                    "message": f"Found {len(papers)} papers (ID 1000-1100)"
+                    "threshold": similarity_threshold,
+                    "message": (
+                        f"Found {len(papers)} papers "
+                        f"(cosine similarity >= {similarity_threshold})"
+                    ),
                 })
                 
         finally:

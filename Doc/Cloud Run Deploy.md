@@ -15,8 +15,13 @@ cloudrun/
 ## デプロイ
 
 ```bash
+# cloudrun ディレクトリに移動
 cd cloudrun
-gcloud run deploy paper-agent-api --source . --region asia-northeast1 --project $PROJECT_ID --allow-unauthenticated --timeout=300 --set-env-vars DATABASE_URL="DB_URL"
+
+# デプロイコマンド
+# DATABASE_URL: Neon DB接続文字列
+
+gcloud run deploy paper-agent-api --source . --region asia-northeast1 --project PROJECT_ID_HERE --allow-unauthenticated --timeout=60 --set-env-vars "DATABASE_URL=URL_HERE" --set-env-vars "GOOGLE_CLOUD_LOCATION=asia-northeast1" --set-env-vars "GOOGLE_CLOUD_PROJECT=PROJECT_ID_HERE"
 ```
 
 ## サービス情報
