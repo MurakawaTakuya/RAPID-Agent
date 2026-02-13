@@ -12,7 +12,7 @@ import torch
 
 
 # 環境変数の準備
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./key/paper-agent-486306-5f393d996a84.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./key/paper-agent-486306-5f393d996a8.json"
 
 # プロジェクト ID / リージョン をここに書き換えてください
 PROJECT_ID = "paper-agent-486306"

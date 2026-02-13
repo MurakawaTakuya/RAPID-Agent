@@ -43,7 +43,7 @@ class Paper:
             url=data["url"],
             conference_name=data["conference_name"],
             conference_year=data["conference_year"],
-            embedding=torch.tensor(data["embedding"]),
+            embedding=data["embedding"],
             authors=data.get("authors", None),
         )
 

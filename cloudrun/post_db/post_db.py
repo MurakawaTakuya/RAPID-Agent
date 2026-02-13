@@ -17,8 +17,8 @@ def post_db(item: Paper) -> list:
         "title": item.title,
         "abstract": item.abstract,
         "url": item.url,
-        "conference_name": item.conference_name,
-        "conference_year": item.conference_year,
+        "conferenceName": item.conference_name,
+        "conferenceYear": item.conference_year,
         "embedding": item.embedding,
         "authors": item.authors,
     }

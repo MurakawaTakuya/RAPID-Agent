@@ -1,0 +1,32 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+        },
+        {
+            "name": "distill_videomae",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "store_open_access_data_to_db.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/cloudrun",
+            "justMyCode": false,
+            "args": [
+                "--conf",
+                "WACV",
+                "--year",
+                "2025",
+            ]
+        },
+    ]
+}
