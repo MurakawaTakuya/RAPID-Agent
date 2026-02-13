@@ -82,34 +82,6 @@ def extract_json_from_response(text: str) -> dict | None:
     return None
 
 
-BATCH_SIZE = 250
-def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for a list of texts using Gemini embedding model
-    
-    Handles batching automatically if more than 250 texts are provided.
-    """
-    if not texts:
-        return []
-    
-    all_embeddings = []
-    
-    # Process in batches of 250
-    for i in range(0, len(texts), BATCH_SIZE):
-        batch = texts[i:i + BATCH_SIZE]
-        result = client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=batch,
-            config={
-                "output_dimensionality": 768,  # Match DB schema (768 dimensions)
-                "task_type": "CLUSTERING",  # Optimized for similarity-based grouping
-            },
-        )
-        all_embeddings.extend([e.values for e in result.embeddings])
-    
-    return all_embeddings
-
-
-
 def init_genai_client():
     """Initialize GenAI client for Vertex AI (Cloud Run)"""
     project = os.environ.get("GOOGLE_CLOUD_PROJECT")
