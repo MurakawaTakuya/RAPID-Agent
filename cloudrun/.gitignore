@@ -1,2 +1,4 @@
 post_db/**.json
 .venv1
+key/**
+**/__pycache__/**

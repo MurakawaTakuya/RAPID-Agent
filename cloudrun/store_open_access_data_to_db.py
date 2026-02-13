@@ -72,6 +72,6 @@ def post_db_task(conference: str, year: int):
 
 if __name__ == "__main__":
 
-    CONFERENCE = args.conference
+    CONFERENCE = args.conf
     YEAR = args.year
     post_db_task(CONFERENCE, YEAR)
