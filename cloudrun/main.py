@@ -194,28 +194,31 @@ def search():
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 input_embedding_vector = "[" + ",".join(map(str, input_embedding)) + "]"
+                # Use CTE and inner LIMIT to optimize vector search
                 query = """
-                    SELECT
-                        id,
-                        title,
-                        url,
-                        abstract,
-                        conference_name,
-                        conference_year,
-                        1 - (embedding <=> %s::vector) AS cosine_similarity
-                    FROM papers
-                    WHERE 1 - (embedding <=> %s::vector) >= %s
-                    ORDER BY embedding <=> %s::vector ASC
-                    LIMIT %s;
+                    WITH query_vec AS (
+                        SELECT %s::vector AS q
+                    )
+                    SELECT * FROM (
+                        SELECT
+                            id,
+                            title,
+                            url,
+                            abstract,
+                            conference_name,
+                            conference_year,
+                            1 - (papers.embedding <=> query_vec.q) AS cosine_similarity
+                        FROM papers, query_vec
+                        ORDER BY papers.embedding <=> query_vec.q ASC
+                        LIMIT 500
+                    ) sub
+                    WHERE cosine_similarity >= %s;
                 """
                 cur.execute(
                     query,
                     (
                         input_embedding_vector,
-                        input_embedding_vector,
                         similarity_threshold,
-                        input_embedding_vector,
-                        500,  # Limit to top 500 results
                     ),
                 )
                 rows = cur.fetchall()
