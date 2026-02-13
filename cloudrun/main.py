@@ -170,7 +170,6 @@ def search():
             return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
 
         conferences = data.get("conferences", []) if data else []
-        # input_embedding = data.get("input_embedding", []) if data else []
         similarity_threshold = 0.7
 
         # Initialize Client (API Key or Vertex AI)
@@ -216,7 +215,7 @@ def search():
                         input_embedding_vector,
                         similarity_threshold,
                         input_embedding_vector,
-                        500,  # Limit to top 100 results
+                        500,  # Limit to top 500 results
                     ),
                 )
                 rows = cur.fetchall()

@@ -2,6 +2,7 @@ from google import genai
 from google.genai import types
 from google.genai.types import GenerateContentConfig, EmbedContentConfig
 import json
+import re
 import numpy as np
 
 
@@ -60,6 +61,25 @@ def _fetch_similar_papers(
     ]
     similar_papers.sort(key=lambda x: x[1], reverse=True)  # 類似度の高い順にソート
     return [paper for paper, _ in similar_papers]
+
+
+def _extract_json(text: str) -> dict:
+    # Remove markdown code blocks if present
+    text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
+    text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
+    text = text.strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Try to find JSON object in the text
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+    raise ValueError("Failed to parse JSON from model response.")
 
 
 def generate_categorize_info(
@@ -130,10 +150,7 @@ def generate_categorize_info(
         ),
     )
     text = response.text
-    start_idx = text.find("{")
-    end_idx = text.rfind("}") + 1
-    json_text = text[start_idx:end_idx]
-    categorize_info = json.loads(json_text)
+    categorize_info = _extract_json(text)
 
     for category in categorize_info["categories"]:
         category["content"] = category["content"].replace("\n", " ").strip()
@@ -184,7 +201,7 @@ def categorize_papers(
     }
     """
 
-    original_papers = [paper for paper in papers]
+    original_papers = [paper.copy() for paper in papers]
     for paper in original_papers:
         paper["categories"] = []  # カテゴリリストを初期化. 再利用時のため.
 
@@ -196,14 +213,14 @@ def categorize_papers(
     }
     for q_emb, category in zip(query_embeddings, categorize_info["categories"]):
         category_title = category["title"]
-        papers = _fetch_similar_papers(
+        similar_papers = _fetch_similar_papers(
             original_papers,
             query_embedding=q_emb,
             threshold=threshold,
         )
-        for paper in papers:
+        for paper in similar_papers:
             paper["categories"].append(category_title)
-        result[category_title] = papers
+        result[category_title] = similar_papers
 
     other_papers = [
         paper for paper in original_papers if len(paper["categories"]) == 0
