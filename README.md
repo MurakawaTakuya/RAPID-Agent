@@ -1,4 +1,4 @@
-# React/Next.js, TypeScript, Scss, GitHub, VSCodeの環境用のテンプレート
+# RAPID Agent - Retrieve Academic Papers Into Devisions
 
 ## プロジェクト作成
 ### React + TypeScript

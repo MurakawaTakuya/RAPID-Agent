@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Paper Agent",
-  description: "Search and organize papers",
+  title: "RAPID Agent",
+  description: "Retrieve Academic Papers Into Devisions",
 };
 
 export default function RootLayout({

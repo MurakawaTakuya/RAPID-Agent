@@ -17,9 +17,10 @@ export function Introduction() {
       <div className="fixed top-0 left-0 w-full h-full -z-10 bg-background">
         <FloatingLines
           enabledWaves={["top", "bottom", "middle"]}
-          lineDistance={10}
-          lineCount={10}
+          lineDistance={8}
+          lineCount={12}
           interactive={false}
+          animationSpeed={4}
         />
       </div>
 
@@ -45,11 +46,29 @@ export function Introduction() {
           </AnimatedGradientText>
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-          Paper Agent
+          RAPID Agent
         </h1>
-        <p className="text-xl text-muted-foreground">
-          Discover, analyze, and manage academic papers with the power of AI.
-        </p>
+        <div className="flex flex-wrap justify-center gap-3 mt-4">
+          {[
+            { letter: "R", word: "Retrieve" },
+            { letter: "A", word: "Academic" },
+            { letter: "P", word: "Papers" },
+            { letter: "I", word: "Into" },
+            { letter: "D", word: "Devisions" },
+          ].map(({ letter, word }) => (
+            <div
+              key={letter}
+              className="flex items-center gap-2 bg-secondary/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-secondary/50 transition-all hover:scale-105 hover:bg-secondary/50"
+            >
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                {letter}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {word}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-4 z-10">
