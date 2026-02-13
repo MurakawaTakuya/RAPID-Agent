@@ -50,7 +50,7 @@ def _calculate_similarities_with_query(
     return similarities
 
 
-def _fetch_simillar_papers(
+def _fetch_similar_papers(
     input_papers: list[dict],
     query_embedding: list[float],
     threshold: float = 0.62,
@@ -198,7 +198,7 @@ def categorize_papers(
     }
     for q_emb, category in zip(query_embeddings, categorize_info["categories"]):
         category_title = category["title"]
-        papers = _fetch_simillar_papers(
+        papers = _fetch_similar_papers(
             original_papers,
             query_embedding=q_emb,
             threshold=threshold,
