@@ -74,7 +74,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url, title, abstract, authors, embedding } = body;
+    const {
+      url,
+      title,
+      abstract,
+      authors,
+      embedding,
+      conferenceName,
+      conferenceYear,
+    } = body;
 
     if (!url || !title) {
       return NextResponse.json(
@@ -89,6 +97,8 @@ export async function POST(request: NextRequest) {
       abstract,
       authors,
       embedding,
+      conferenceName,
+      conferenceYear,
     });
 
     return NextResponse.json(result, { status: 201 });
