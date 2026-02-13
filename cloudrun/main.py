@@ -82,7 +82,6 @@ def extract_json_from_response(text: str) -> dict | None:
     return None
 
 
-# TDDO: 一度にembeddingできるのは最大で250個までの可能性あり
 BATCH_SIZE = 250
 def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
     """Generate embeddings for a list of texts using Gemini embedding model
@@ -112,21 +111,14 @@ def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
 
 
 def init_genai_client():
-    """Initialize GenAI client with API Key or Vertex AI (Cloud Run)"""
-    api_key = os.environ.get("GOOGLE_API_KEY")
-    if api_key:
-        return genai.Client(api_key=api_key)
-    
+    """Initialize GenAI client for Vertex AI (Cloud Run)"""
     project = os.environ.get("GOOGLE_CLOUD_PROJECT")
     location = os.environ.get("GOOGLE_CLOUD_LOCATION")
     
     if not project or not location:
-        log_structured("ERROR", "GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_LOCATION is not set")
-        pass
-
-    if not project:
-        log_structured("ERROR", "GOOGLE_CLOUD_PROJECT is not set")
-        pass
+        message = "GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_LOCATION is not set. These are required for Vertex AI initialization."
+        log_structured("ERROR", message)
+        raise ValueError(message)
 
     log_structured("INFO", "Initializing Vertex AI Client", project=project, location=location)
     return genai.Client(
@@ -138,7 +130,7 @@ def init_genai_client():
 
 def generate_query_embedding(
     client: genai.Client, query: str
-) -> list[list[float]]:
+) -> list[float]:
 
     # client is passed from caller, do not re-initialize
     response = client.models.embed_content(
@@ -172,6 +164,11 @@ def search():
 
         data = request.get_json()
         keyword = data.get("keyword", "") if data else ""
+        
+        if not keyword or not isinstance(keyword, str) or not keyword.strip():
+            log_structured("WARNING", "Invalid keyword provided", keyword=keyword)
+            return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
+
         conferences = data.get("conferences", []) if data else []
         # input_embedding = data.get("input_embedding", []) if data else []
         similarity_threshold = 0.7
@@ -206,7 +203,6 @@ def search():
                         abstract,
                         conference_name,
                         conference_year,
-                        embedding,
                         1 - (embedding <=> %s::vector) AS cosine_similarity
                     FROM papers
                     WHERE 1 - (embedding <=> %s::vector) >= %s
@@ -220,7 +216,7 @@ def search():
                         input_embedding_vector,
                         similarity_threshold,
                         input_embedding_vector,
-                        500,  # Limit to top 500 results
+                        500,  # Limit to top 100 results
                     ),
                 )
                 rows = cur.fetchall()
@@ -236,7 +232,6 @@ def search():
                         "conferenceName": row["conference_name"],
                         "conferenceYear": row["conference_year"],
                         "cosineSimilarity": float(row["cosine_similarity"]),
-                        "embedding": row["embedding"],
                     })
                 
                 log_structured(

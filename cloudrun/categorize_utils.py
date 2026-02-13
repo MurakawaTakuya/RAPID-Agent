@@ -2,7 +2,7 @@ from google import genai
 from google.genai import types
 from google.genai.types import GenerateContentConfig, EmbedContentConfig
 import json
-import torch
+import numpy as np
 
 
 BATCH_SIZE = 250
@@ -10,15 +10,11 @@ BATCH_SIZE = 250
 
 def _generate_query_embeddings(
     client: genai.Client, queries: list[str]
-) -> list[float]:
+) -> list[list[float]]:
     queries_embeddings = []
     for i in range(0, len(queries), BATCH_SIZE):
-        if i + BATCH_SIZE > len(queries):
-            batch = queries[i:]
-        else:
-            batch = queries[i: i + BATCH_SIZE]
+        batch = queries[i: i + BATCH_SIZE]
 
-        client = genai.Client()
         response = client.models.embed_content(
             model="gemini-embedding-001",
             contents=batch,
@@ -32,12 +28,13 @@ def _generate_query_embeddings(
 
 
 def _calculate_cosine_similarity(
-    vec1: torch.Tensor, vec2: torch.Tensor
+    vec1: np.ndarray, vec2: np.ndarray
 ) -> float:
-    vec1 = vec1 / vec1.norm()
-    vec2 = vec2 / vec2.norm()
-    similarity = torch.dot(vec1, vec2).item()
-    return similarity
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+    return float(np.dot(vec1, vec2) / (norm1 * norm2))
 
 
 def _calculate_similarities_with_query(
@@ -45,7 +42,7 @@ def _calculate_similarities_with_query(
 ) -> list[tuple[dict, float]]:
     similarities = []
     for paper in papers:
-        sim = _calculate_cosine_similarity(torch.tensor(query_embedding), torch.tensor(paper["embedding"]))
+        sim = _calculate_cosine_similarity(np.array(query_embedding), np.array(paper["embedding"]))
         similarities.append((paper, sim))
     return similarities
 
@@ -113,10 +110,11 @@ def generate_categorize_info(
             {"title": "Text to Video", "content": "単純なテキストプロンプトから動画を生成する手法"},
             {"title": "Motion customization", "content": "参照となる動画から動作情報を抽出して学習"},
             {"title": "Motion transfer", "content": "ある動画の動作を別のコンテンツに適用して生成"},
-            {"title": "Video editing", "content": "既存の動画を編集・変換して新しい動画を生成"},
+            {"title": "Video editing", "content": "既存の動画を編集・変換して新しい動画を生成"}
+        ]
     }
     """
-    prompt += f'\n[ユーザー入力]： {user_input}\n出力：\n'
+    prompt += f'\n[ユーザー入力]： """{user_input}"""\n出力：\n'
 
     tools = [
         types.Tool(google_search=types.GoogleSearch()),
@@ -208,7 +206,7 @@ def categorize_papers(
         result[category_title] = papers
 
     other_papers = [
-        paper for paper in original_papers if len(paper.categories) == 0
+        paper for paper in original_papers if len(paper["categories"]) == 0
     ]
     result["other"] = other_papers
 
