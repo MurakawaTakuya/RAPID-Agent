@@ -319,6 +319,10 @@ export function InputInline() {
           </p>
         </div>
       )}
+
+      <div className="sticky bottom-0 w-full py-2 text-center text-sm text-muted-foreground mt-auto">
+        最大500件まで検索できます
+      </div>
     </div>
   );
 }
