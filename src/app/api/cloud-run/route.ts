@@ -12,7 +12,16 @@ export async function POST(request: NextRequest) {
     const { conferences, keyword, threshold } = body;
 
     // Validate input
-    // TODO: conferenceの絞り込みを追加
+    if (
+      !conferences ||
+      !Array.isArray(conferences) ||
+      conferences.length === 0
+    ) {
+      return NextResponse.json(
+        { error: "学会を選択してください" },
+        { status: 400 }
+      );
+    }
     if (!keyword || typeof keyword !== "string" || keyword.trim() === "") {
       return NextResponse.json(
         { error: "キーワードを入力してください" },
