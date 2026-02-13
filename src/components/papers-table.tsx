@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export interface Paper {
   id: number;
@@ -30,13 +31,29 @@ export function PapersTable({
   onDeletePaper,
   onDeleteSelected,
 }: PapersTableProps) {
+  const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(
+    new Set()
+  );
+
+  const toggleAbstract = (id: number) => {
+    setExpandedAbstracts((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const isAllSelected =
     papers.length > 0 && selectedPapers.size === papers.length;
 
   return (
     <div className="max-w-7xl w-full space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{message}</p>
         {selectedPapers.size > 0 && (
           <Button variant="destructive" size="sm" onClick={onDeleteSelected}>
             選択した{selectedPapers.size}件を削除
@@ -49,24 +66,26 @@ export function PapersTable({
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr className="border-b">
-                <th className="w-12 px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={onToggleSelectAll}
-                    className="rounded border-gray-300 cursor-pointer"
-                  />
+                <th className="w-12 px-4 py-3 align-middle">
+                  <div className="flex items-center justify-center h-full">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={onToggleSelectAll}
+                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                    />
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground w-1/4">
+                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
                   Title
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground whitespace-nowrap w-32">
+                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground whitespace-nowrap w-32">
                   Conference
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
                   Abstract
                 </th>
-                <th className="pl-1 pr-4 py-3 text-center text-sm font-medium text-muted-foreground w-14">
+                <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
                   Delete
                 </th>
               </tr>
@@ -79,12 +98,12 @@ export function PapersTable({
                     selectedPapers.has(paper.id) ? "bg-accent/30" : ""
                   }`}
                 >
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4 align-middle">
                     <input
                       type="checkbox"
                       checked={selectedPapers.has(paper.id)}
                       onChange={() => onTogglePaperSelection(paper.id)}
-                      className="rounded border-gray-300 cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
                     />
                   </td>
                   <td className="px-4 py-4">
@@ -107,7 +126,17 @@ export function PapersTable({
                   </td>
                   <td className="px-4 py-4">
                     {paper.abstract && (
-                      <div className="text-sm text-muted-foreground line-clamp-4">
+                      <div
+                        onClick={() => toggleAbstract(paper.id)}
+                        className={`text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors ${
+                          expandedAbstracts.has(paper.id) ? "" : "line-clamp-4"
+                        }`}
+                        title={
+                          expandedAbstracts.has(paper.id)
+                            ? "クリックして折りたたむ"
+                            : "クリックして全文を表示"
+                        }
+                      >
                         {paper.abstract}
                       </div>
                     )}
@@ -120,8 +149,8 @@ export function PapersTable({
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
+                        width="18"
+                        height="18"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
