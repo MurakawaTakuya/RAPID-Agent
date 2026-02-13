@@ -135,7 +135,7 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Paper Agent</SidebarGroupLabel>
+          <SidebarGroupLabel>RAPID Agent</SidebarGroupLabel>
           <SidebarMenu>
             {data.navMain.map((item) => (
               <Collapsible

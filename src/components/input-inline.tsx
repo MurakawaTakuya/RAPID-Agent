@@ -3,6 +3,7 @@
 import { MultiSelect } from "@/components/multi-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -82,6 +83,7 @@ const conferenceOptions = [
 export function InputInline() {
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
+  const [threshold, setThreshold] = useState([0.65]);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -113,6 +115,7 @@ export function InputInline() {
         body: JSON.stringify({
           conferences: selectedConferences,
           keyword,
+          threshold: threshold[0],
         }),
       });
 
@@ -225,6 +228,35 @@ export function InputInline() {
             if (e.key === "Enter") handleSearch();
           }}
           disabled={loading}
+        />
+      </div>
+
+      {/* Threshold Slider */}
+      <div className="max-w-3xl w-full space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">類似度しきい値</label>
+          <Input
+            type="number"
+            min={0}
+            max={1}
+            step={0.01}
+            value={threshold[0]}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val) && val >= 0 && val <= 1) {
+                setThreshold([val]);
+              }
+            }}
+            className="w-20 h-8 text-right"
+          />
+        </div>
+        <Slider
+          value={threshold}
+          onValueChange={setThreshold}
+          min={0}
+          max={1}
+          step={0.01}
+          className="w-full"
         />
       </div>
 

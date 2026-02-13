@@ -142,7 +142,12 @@ def search():
             return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
 
         conferences = data.get("conferences", []) if data else []
-        similarity_threshold = 0.7
+        
+        # Get threshold from request, default to 0.65
+        try:
+            similarity_threshold = float(data.get("threshold", 0.65))
+        except (ValueError, TypeError):
+            similarity_threshold = 0.65
 
         # Initialize Client (API Key or Vertex AI)
         client = init_genai_client()
