@@ -66,9 +66,6 @@ export function PapersTable({
                 <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                   Abstract
                 </th>
-                <th className="px-1 py-3 text-center text-sm font-medium text-muted-foreground w-12">
-                  Link
-                </th>
                 <th className="pl-1 pr-4 py-3 text-center text-sm font-medium text-muted-foreground w-14">
                   Delete
                 </th>
@@ -91,9 +88,15 @@ export function PapersTable({
                     />
                   </td>
                   <td className="px-4 py-4">
-                    <div className="font-medium text-sm text-card-foreground line-clamp-4">
+                    <a
+                      href={paper.url.startsWith("http") ? paper.url : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "underline" }}
+                      className="font-medium text-sm text-primary line-clamp-4 hover:opacity-80 transition-opacity"
+                    >
                       {paper.title}
-                    </div>
+                    </a>
                   </td>
                   <td className="px-4 py-4">
                     {(paper.conferenceName || paper.conferenceYear) && (
@@ -108,32 +111,6 @@ export function PapersTable({
                         {paper.abstract}
                       </div>
                     )}
-                  </td>
-                  <td className="px-1 py-4 text-center">
-                    <a
-                      href={paper.url.startsWith("http") ? paper.url : "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center p-2 hover:bg-accent rounded-md transition-colors"
-                      title="新しいタブで開く"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                        <polyline points="15 3 21 3 21 9" />
-                        <line x1="10" y1="14" x2="21" y2="3" />
-                      </svg>
-                    </a>
                   </td>
                   <td className="pl-1 pr-4 py-4 text-center">
                     <button
