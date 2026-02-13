@@ -110,11 +110,37 @@ def generate_embeddings(client, texts: list[str]) -> list[list[float]]:
     return all_embeddings
 
 
+
+def init_genai_client():
+    """Initialize GenAI client with API Key or Vertex AI (Cloud Run)"""
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if api_key:
+        return genai.Client(api_key=api_key)
+    
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    location = os.environ.get("GOOGLE_CLOUD_LOCATION")
+    
+    if not project or not location:
+        log_structured("ERROR", "GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_LOCATION is not set")
+        pass
+
+    if not project:
+        log_structured("ERROR", "GOOGLE_CLOUD_PROJECT is not set")
+        pass
+
+    log_structured("INFO", "Initializing Vertex AI Client", project=project, location=location)
+    return genai.Client(
+        vertexai=True,
+        project=project,
+        location=location
+    )
+
+
 def generate_query_embedding(
     client: genai.Client, query: str
 ) -> list[list[float]]:
 
-    client = genai.Client()
+    # client is passed from caller, do not re-initialize
     response = client.models.embed_content(
         model="gemini-embedding-001",
         contents=[query],
@@ -148,10 +174,10 @@ def search():
         keyword = data.get("keyword", "") if data else ""
         conferences = data.get("conferences", []) if data else []
         # input_embedding = data.get("input_embedding", []) if data else []
-        similarity_threshold = 0.62
+        similarity_threshold = 0.7
 
-        # TODO: initialize Client beforehand
-        client = genai.Client()
+        # Initialize Client (API Key or Vertex AI)
+        client = init_genai_client()
         input_embedding = generate_query_embedding(client, keyword)
 
         # Log the request
@@ -194,7 +220,7 @@ def search():
                         input_embedding_vector,
                         similarity_threshold,
                         input_embedding_vector,
-                        50,  # Limit to top 50 results
+                        500,  # Limit to top 500 results
                     ),
                 )
                 rows = cur.fetchall()

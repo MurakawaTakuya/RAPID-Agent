@@ -11,17 +11,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { conferences, keyword } = body;
 
-    // Log the received data
-    console.log("Received request:", { conferences, keyword });
-
     // Validate input
-    if (
-      !conferences ||
-      !Array.isArray(conferences) ||
-      conferences.length === 0
-    ) {
+    // TODO: conferenceの絞り込みを追加
+    if (!keyword || typeof keyword !== "string" || keyword.trim() === "") {
       return NextResponse.json(
-        { error: "学会を選択してください" },
+        { error: "キーワードを入力してください" },
         { status: 400 }
       );
     }
@@ -34,8 +28,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    console.log(`Forwarding request to Cloud Run: ${cloudRunUrl}`);
 
     // Forward request to Python Cloud Run service
     const response = await fetch(cloudRunUrl, {
@@ -57,7 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log(`Received response from Cloud Run:`, data);
 
     return NextResponse.json(data);
   } catch (error) {
