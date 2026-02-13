@@ -193,7 +193,7 @@ def search():
             
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                input_embedding_vector = "[" + ",".join(map(str, input_embedding)) + "]"
+                input_embedding_vector = json.dumps(input_embedding)
                 # Use CTE and inner LIMIT to optimize vector search
                 query = """
                     WITH query_vec AS (
