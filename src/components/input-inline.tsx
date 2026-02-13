@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Paper, PapersTable } from "@/components/papers-table";
 
@@ -19,68 +19,21 @@ interface SearchResult {
   error?: string;
 }
 
-// Conference options grouped by conference name with years
-const conferenceOptions = [
-  {
-    heading: "CVPR",
-    options: [
-      { value: "cvpr2024", label: "CVPR 2024" },
-      { value: "cvpr2023", label: "CVPR 2023" },
-      { value: "cvpr2022", label: "CVPR 2022" },
-      { value: "cvpr2021", label: "CVPR 2021" },
-    ],
-  },
-  {
-    heading: "ICCV",
-    options: [
-      { value: "iccv2023", label: "ICCV 2023" },
-      { value: "iccv2021", label: "ICCV 2021" },
-      { value: "iccv2019", label: "ICCV 2019" },
-    ],
-  },
-  {
-    heading: "ECCV",
-    options: [
-      { value: "eccv2024", label: "ECCV 2024" },
-      { value: "eccv2022", label: "ECCV 2022" },
-      { value: "eccv2020", label: "ECCV 2020" },
-    ],
-  },
-  {
-    heading: "NeurIPS",
-    options: [
-      { value: "neurips2024", label: "NeurIPS 2024" },
-      { value: "neurips2023", label: "NeurIPS 2023" },
-      { value: "neurips2022", label: "NeurIPS 2022" },
-    ],
-  },
-  {
-    heading: "ICML",
-    options: [
-      { value: "icml2024", label: "ICML 2024" },
-      { value: "icml2023", label: "ICML 2023" },
-      { value: "icml2022", label: "ICML 2022" },
-    ],
-  },
-  {
-    heading: "ICLR",
-    options: [
-      { value: "iclr2024", label: "ICLR 2024" },
-      { value: "iclr2023", label: "ICLR 2023" },
-      { value: "iclr2022", label: "ICLR 2022" },
-    ],
-  },
-  {
-    heading: "SIGGRAPH",
-    options: [
-      { value: "siggraph2024", label: "SIGGRAPH 2024" },
-      { value: "siggraph2023", label: "SIGGRAPH 2023" },
-      { value: "siggraph2022", label: "SIGGRAPH 2022" },
-    ],
-  },
-];
+interface ConferenceApiResponse {
+  heading: string;
+  years: number[];
+}
+
+interface ConferenceGroup {
+  heading: string;
+  options: { value: string; label: string }[];
+}
 
 export function InputInline() {
+  const [conferenceOptions, setConferenceOptions] = useState<ConferenceGroup[]>(
+    []
+  );
+  const [conferencesLoading, setConferencesLoading] = useState(true);
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
   const [threshold, setThreshold] = useState([0.65]);
@@ -89,6 +42,46 @@ export function InputInline() {
   const [loading, setLoading] = useState(false);
   const [selectedPapers, setSelectedPapers] = useState<Set<number>>(new Set());
   const { user } = useAuth();
+
+  // 学会の選択肢をDBから取得
+  useEffect(() => {
+    // ユーザーが変わるたびにローディング状態をリセット
+    setConferencesLoading(true);
+
+    if (!user) {
+      setConferenceOptions([]);
+      setConferencesLoading(false);
+      return;
+    }
+
+    async function fetchConferences() {
+      try {
+        const token = await user!.getIdToken();
+        const response = await fetch("/api/papers/conferences", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data: ConferenceApiResponse[] = await response.json();
+          // APIレスポンスをMultiSelect用の形式に変換
+          const groups: ConferenceGroup[] = data.map((group) => ({
+            heading: group.heading,
+            options: group.years.map((year) => ({
+              value: `${group.heading.toLowerCase().replace(/\s+/g, "")}${year}`,
+              label: `${group.heading} ${year}`,
+            })),
+          }));
+          setConferenceOptions(groups);
+        }
+      } catch (err) {
+        console.error("Failed to fetch conferences:", err);
+      } finally {
+        setConferencesLoading(false);
+      }
+    }
+    fetchConferences();
+  }, [user]);
 
   const handleSearch = async () => {
     if (!user) return;
@@ -215,9 +208,14 @@ export function InputInline() {
         <label className="text-sm font-medium">学会を選択（複数選択可）</label>
         <MultiSelect
           options={conferenceOptions}
-          placeholder="学会と年を選択..."
+          placeholder={
+            conferencesLoading
+              ? "学会データを読み込み中..."
+              : "学会と年を選択..."
+          }
           onValueChange={setSelectedConferences}
           value={selectedConferences}
+          disabled={conferencesLoading}
           responsive={{
             mobile: { maxCount: 5 },
             tablet: { maxCount: 7 },

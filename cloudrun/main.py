@@ -142,7 +142,34 @@ def search():
             return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
 
         conferences = data.get("conferences", []) if data else []
-        
+
+        if conferences and not isinstance(conferences, list):
+            log_structured(
+                "WARNING",
+                "Invalid conferences provided (must be a list of strings)",
+                conferences=conferences,
+            )
+            return jsonify({"error": "Invalid conferences: must be a list of strings"}), 400
+
+        # Parse conference values (e.g., "cvpr2025") into (name, year) pairs
+        conference_filters = []
+        for conf in conferences:
+            if not isinstance(conf, str):
+                 log_structured(
+                    "WARNING",
+                    "Invalid conference entry (must be a string)",
+                    invalid_conference=conf,
+                    conferences=conferences,
+                )
+                 return jsonify({"error": "Invalid conferences: each entry must be a string"}), 400
+
+            # Extract year (trailing digits) and name (everything before)
+            match = re.match(r'^(.+?)(\d{4})$', conf)
+            if match:
+                name_key = match.group(1)  # e.g., "cvpr"
+                year = int(match.group(2))  # e.g., 2025
+                conference_filters.append((name_key, year))
+
         # Get threshold from request, default to 0.65
         try:
             similarity_threshold = float(data.get("threshold", 0.65))
@@ -173,10 +200,27 @@ def search():
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 input_embedding_vector = json.dumps(input_embedding)
+                
+                # Build conference filter clause
+                conf_clause = ""
+                conf_params: list = []
+                if conference_filters:
+                    conditions = []
+                    for name_key, year in conference_filters:
+                        conditions.append(
+                            "(LOWER(REPLACE(conference_name, ' ', '')) = %s AND conference_year = %s)"
+                        )
+                        conf_params.extend([name_key, year])
+                    conf_clause = "WHERE " + " OR ".join(conditions)
+                
                 # Use CTE and inner LIMIT to optimize vector search
-                query = """
+                query = f"""
                     WITH query_vec AS (
                         SELECT %s::vector AS q
+                    ),
+                    filtered_papers AS (
+                        SELECT * FROM papers
+                        {conf_clause}
                     )
                     SELECT * FROM (
                         SELECT
@@ -186,9 +230,9 @@ def search():
                             abstract,
                             conference_name,
                             conference_year,
-                            1 - (papers.embedding <=> query_vec.q) AS cosine_similarity
-                        FROM papers, query_vec
-                        ORDER BY papers.embedding <=> query_vec.q ASC
+                            1 - (filtered_papers.embedding <=> query_vec.q) AS cosine_similarity
+                        FROM filtered_papers, query_vec
+                        ORDER BY filtered_papers.embedding <=> query_vec.q ASC
                         LIMIT 500
                     ) sub
                     WHERE cosine_similarity >= %s;
@@ -197,6 +241,7 @@ def search():
                     query,
                     (
                         input_embedding_vector,
+                        *conf_params,
                         similarity_threshold,
                     ),
                 )

@@ -12,7 +12,19 @@ export async function POST(request: NextRequest) {
     const { conferences, keyword, threshold } = body;
 
     // Validate input
-    // TODO: conferenceの絞り込みを追加
+    if (
+      !conferences ||
+      !Array.isArray(conferences) ||
+      conferences.length === 0 ||
+      !conferences.every(
+        (c: unknown) => typeof c === "string" && c.trim() !== ""
+      )
+    ) {
+      return NextResponse.json(
+        { error: "学会の形式が不正です" },
+        { status: 400 }
+      );
+    }
     if (!keyword || typeof keyword !== "string" || keyword.trim() === "") {
       return NextResponse.json(
         { error: "キーワードを入力してください" },

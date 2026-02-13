@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+  index,
   integer,
   pgTable,
   serial,
@@ -18,17 +20,25 @@ export const users = pgTable("users", {
 });
 
 // 論文テーブル（共有キャッシュ）
-export const papers = pgTable("papers", {
-  id: serial("id").primaryKey(),
-  url: text("url").notNull(),
-  title: text("title").unique().notNull(),
-  abstract: text("abstract"),
-  authors: text("authors"),
-  conferenceName: text("conference_name"),
-  conferenceYear: integer("conference_year"),
-  embedding: vector("embedding", { dimensions: 768 }), // Gemini gemini-embedding-001 (output_dimensionality: 768)
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const papers = pgTable(
+  "papers",
+  {
+    id: serial("id").primaryKey(),
+    url: text("url").notNull(),
+    title: text("title").unique().notNull(),
+    abstract: text("abstract"),
+    authors: text("authors"),
+    conferenceName: text("conference_name"),
+    conferenceYear: integer("conference_year"),
+    embedding: vector("embedding", { dimensions: 768 }), // Gemini gemini-embedding-001 (output_dimensionality: 768)
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    conferenceNameNormalizedIdx: index(
+      "idx_papers_conference_name_normalized"
+    ).on(sql`(LOWER(REPLACE(${table.conferenceName}, ' ', '')))`),
+  })
+);
 
 // 型エクスポート
 export type User = typeof users.$inferSelect;
