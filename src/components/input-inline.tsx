@@ -45,7 +45,14 @@ export function InputInline() {
 
   // 学会の選択肢をDBから取得
   useEffect(() => {
-    if (!user) return;
+    // ユーザーが変わるたびにローディング状態をリセット
+    setConferencesLoading(true);
+
+    if (!user) {
+      setConferenceOptions([]);
+      setConferencesLoading(false);
+      return;
+    }
 
     async function fetchConferences() {
       try {

@@ -23,14 +23,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // conference_name と conference_year の組み合わせを取得
+    // conference_nameとconference_yearの組み合わせを取得
     const result = await db
       .select({
         conferenceName: schema.papers.conferenceName,
         conferenceYear: schema.papers.conferenceYear,
       })
       .from(schema.papers)
-      .where(sql`${schema.papers.conferenceName} IS NOT NULL`)
+      .where(
+        sql`${schema.papers.conferenceName} IS NOT NULL AND ${schema.papers.conferenceYear} IS NOT NULL`
+      )
       .groupBy(schema.papers.conferenceName, schema.papers.conferenceYear)
       .orderBy(
         schema.papers.conferenceName,
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
         groupMap.set(name, []);
       }
 
-      if (row.conferenceYear) {
+      if (row.conferenceYear !== null && row.conferenceYear !== undefined) {
         groupMap.get(name)!.push(row.conferenceYear);
       }
     }

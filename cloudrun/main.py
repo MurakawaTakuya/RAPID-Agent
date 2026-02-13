@@ -142,10 +142,27 @@ def search():
             return jsonify({"error": "Invalid keyword: must be a non-empty string"}), 400
 
         conferences = data.get("conferences", []) if data else []
-        
+
+        if conferences and not isinstance(conferences, list):
+            log_structured(
+                "WARNING",
+                "Invalid conferences provided (must be a list of strings)",
+                conferences=conferences,
+            )
+            return jsonify({"error": "Invalid conferences: must be a list of strings"}), 400
+
         # Parse conference values (e.g., "cvpr2025") into (name, year) pairs
         conference_filters = []
         for conf in conferences:
+            if not isinstance(conf, str):
+                 log_structured(
+                    "WARNING",
+                    "Invalid conference entry (must be a string)",
+                    invalid_conference=conf,
+                    conferences=conferences,
+                )
+                 return jsonify({"error": "Invalid conferences: each entry must be a string"}), 400
+
             # Extract year (trailing digits) and name (everything before)
             match = re.match(r'^(.+?)(\d{4})$', conf)
             if match:

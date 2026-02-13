@@ -1,0 +1,1 @@
+CREATE INDEX "idx_papers_conference_name_normalized" ON "papers" USING btree ((LOWER(REPLACE("conference_name", ' ', ''))));
