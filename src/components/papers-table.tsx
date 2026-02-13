@@ -10,6 +10,7 @@ export interface Paper {
   abstract: string | null;
   conferenceName: string | null;
   conferenceYear: number | null;
+  cosineSimilarity: number | null;
 }
 
 interface PapersTableProps {
@@ -85,6 +86,9 @@ export function PapersTable({
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
                   Abstract
                 </th>
+                <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
+                  Similarity
+                </th>
                 <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
                   Delete
                 </th>
@@ -140,6 +144,14 @@ export function PapersTable({
                         {paper.abstract}
                       </div>
                     )}
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    {paper.cosineSimilarity !== null &&
+                      paper.cosineSimilarity !== undefined && (
+                        <span className="text-sm text-muted-foreground">
+                          {paper.cosineSimilarity.toFixed(3)}
+                        </span>
+                      )}
                   </td>
                   <td className="pl-1 pr-4 py-4 text-center">
                     <button
