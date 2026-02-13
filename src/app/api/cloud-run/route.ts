@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { conferences, keyword } = body;
+    const { conferences, keyword, threshold } = body;
 
     // Validate input
     // TODO: conferenceの絞り込みを追加
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         Authorization: request.headers.get("Authorization") || "",
       },
-      body: JSON.stringify({ conferences, keyword }),
+      body: JSON.stringify({ conferences, keyword, threshold }),
     });
 
     if (!response.ok) {

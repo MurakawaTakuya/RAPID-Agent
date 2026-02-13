@@ -240,7 +240,7 @@ export function InputInline() {
       {/* Threshold Slider */}
       <div className="max-w-3xl w-full space-y-4 pt-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">類似度しきい値</label>
+          <label className="text-sm font-medium">類似度しきい値 (≥)</label>
           <Input
             type="number"
             min={0}

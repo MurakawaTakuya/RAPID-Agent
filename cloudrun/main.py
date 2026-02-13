@@ -230,7 +230,7 @@ def search():
                     "threshold": similarity_threshold,
                     "message": (
                         f"Found {len(papers)} papers "
-                        f"(cosine similarity >= {similarity_threshold})"
+                        f"(cosine similarity ≥ {similarity_threshold})"
                     ),
                 })
                 
