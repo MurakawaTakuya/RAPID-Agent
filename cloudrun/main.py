@@ -146,6 +146,8 @@ def search():
         # Get threshold from request, default to 0.65
         try:
             similarity_threshold = float(data.get("threshold", 0.65))
+            if not (0 <= similarity_threshold <= 1):
+                return jsonify({"error": "Invalid threshold: must be between 0 and 1"}), 400
         except (ValueError, TypeError):
             similarity_threshold = 0.65
 

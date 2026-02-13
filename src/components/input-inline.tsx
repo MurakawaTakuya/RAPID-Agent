@@ -103,6 +103,12 @@ export function InputInline() {
       return;
     }
 
+    // Validation: Threshold must be between 0 and 1
+    if (threshold[0] < 0 || threshold[0] > 1) {
+      setError("しきい値は0から1の間で指定してください");
+      return;
+    }
+
     setLoading(true);
     try {
       const token = await user.getIdToken();
