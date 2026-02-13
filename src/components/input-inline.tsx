@@ -103,6 +103,12 @@ export function InputInline() {
       return;
     }
 
+    // Validation: Keyword is required
+    if (!keyword.trim()) {
+      setError("検索キーワードを入力してください");
+      return;
+    }
+
     // Validation: Threshold must be between 0 and 1
     if (threshold[0] < 0 || threshold[0] > 1) {
       setError("しきい値は0から1の間で指定してください");
@@ -231,7 +237,7 @@ export function InputInline() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearch();
+            if (e.key === "Enter" && keyword.trim()) handleSearch();
           }}
           disabled={loading}
         />
@@ -271,7 +277,12 @@ export function InputInline() {
         size="lg"
         className="max-w-3xl w-full h-12"
         onClick={handleSearch}
-        disabled={loading || !user || selectedConferences.length === 0}
+        disabled={
+          loading ||
+          !user ||
+          selectedConferences.length === 0 ||
+          !keyword.trim()
+        }
       >
         {loading ? (
           <>
