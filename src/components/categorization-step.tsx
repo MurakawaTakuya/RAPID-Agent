@@ -191,7 +191,7 @@ export function CategorizationStep({
                   {categorizationInfo.title}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  以下のカテゴリで分類を実行しますか？
+                  以下のグループで分類を提案しています
                 </p>
               </div>
 

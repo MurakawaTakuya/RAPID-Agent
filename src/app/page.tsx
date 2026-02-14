@@ -199,7 +199,7 @@ export default function Home() {
                     <Spinner />
                   ) : (
                     <>
-                      この分類でグループ化する
+                      このグループで分類する
                       <ChevronRight className="size-4" />
                     </>
                   )}
