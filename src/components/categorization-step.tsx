@@ -1,10 +1,10 @@
 "use client";
 
-import { Paper } from "@/components/papers-table";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { parseErrorResponse } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 
@@ -13,35 +13,25 @@ export interface Category {
   content: string;
 }
 
-export interface CategorizedPaper extends Omit<Paper, "cosineSimilarity"> {
-  cosineSimilarity?: number | null;
-  categories?: string[];
-}
-
 export interface CategorizationInfo {
   title: string;
   categories: Category[];
 }
 
 interface CategorizationStepProps {
-  papers: Paper[];
-  onCategorizationComplete: (
-    result: Record<string, CategorizedPaper[]>,
-    info: CategorizationInfo
-  ) => void;
   inputValue: string;
   onInputChange: (value: string) => void;
   categorizationInfo: CategorizationInfo | null;
   onCategorizationInfoChange: (info: CategorizationInfo | null) => void;
+  externalError?: string | null;
 }
 
 export function CategorizationStep({
-  papers,
-  onCategorizationComplete,
   inputValue,
   onInputChange,
   categorizationInfo,
   onCategorizationInfoChange,
+  externalError,
 }: CategorizationStepProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -75,46 +65,6 @@ export function CategorizationStep({
 
       const data = await response.json();
       onCategorizationInfoChange(data);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRunCategorization = async () => {
-    if (!user || !categorizationInfo) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const token = await user.getIdToken();
-      const response = await fetch("/api/cloud-run/categorize/run", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          info: categorizationInfo,
-          paper_ids: papers.map((p) => p.id),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorMessage = await parseErrorResponse(
-          response,
-          "Failed to categorize papers"
-        );
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      onCategorizationComplete(data, categorizationInfo);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -192,51 +142,14 @@ export function CategorizationStep({
               </div>
             ))}
           </div>
-
-          <div className="flex justify-end pt-2">
-            <Button
-              onClick={handleRunCategorization}
-              disabled={loading}
-              size="lg"
-              className="w-full md:w-auto"
-            >
-              {loading ? (
-                <>
-                  <Spinner className="mr-2" />
-                  分類を実行中...
-                </>
-              ) : (
-                "この分類でグループ化する"
-              )}
-            </Button>
-          </div>
         </div>
       )}
 
-      {error && (
+      {(error || externalError) && (
         <div className="w-full max-w-3xl p-4 rounded-lg border border-destructive bg-destructive/10 text-destructive text-sm text-center">
-          {error}
+          {error || externalError}
         </div>
       )}
     </div>
   );
-}
-
-async function parseErrorResponse(
-  response: Response,
-  defaultMessage: string
-): Promise<string> {
-  const contentType = response.headers.get("content-type");
-  try {
-    if (contentType && contentType.includes("application/json")) {
-      const data = await response.json();
-      if (typeof data === "object" && data !== null && "error" in data) {
-        return data.error || defaultMessage;
-      }
-    }
-    const text = await response.text();
-    return text.slice(0, 200) || defaultMessage;
-  } catch {
-    return `${defaultMessage}: ${response.status} ${response.statusText}`;
-  }
 }

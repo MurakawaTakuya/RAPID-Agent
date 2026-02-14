@@ -11,7 +11,9 @@ import { SearchStepper } from "@/components/search-stepper";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { parseErrorResponse } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -30,6 +32,10 @@ export default function Home() {
     string,
     Paper[]
   > | null>(null);
+  const [isCategorizing, setIsCategorizing] = useState(false);
+  const [categorizationError, setCategorizationError] = useState<string | null>(
+    null
+  );
 
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
@@ -70,6 +76,46 @@ export default function Home() {
     setCategorizationInfo(info);
     setDirection(1);
     setCurrentStep(3);
+  };
+
+  const handleRunCategorization = async () => {
+    if (!user || !categorizationInfo) return;
+
+    setIsCategorizing(true);
+    setCategorizationError(null);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/cloud-run/categorize/run", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          info: categorizationInfo,
+          paper_ids: (searchResult?.papers || []).map((p) => p.id),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await parseErrorResponse(
+          response,
+          "Failed to categorize papers"
+        );
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      handleCategorizationComplete(data, categorizationInfo);
+    } catch (err) {
+      if (err instanceof Error) {
+        setCategorizationError(err.message);
+      } else {
+        setCategorizationError("An unknown error occurred");
+      }
+    } finally {
+      setIsCategorizing(false);
+    }
   };
 
   const variants = {
@@ -141,6 +187,28 @@ export default function Home() {
                   </Button>
                 </motion.div>
               )}
+            {currentStep === 2 && categorizationInfo && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <Button
+                  onClick={handleRunCategorization}
+                  disabled={isCategorizing}
+                  className="gap-1"
+                >
+                  {isCategorizing ? (
+                    <Spinner className="mr-2" />
+                  ) : (
+                    <>
+                      この分類でグループ化する
+                      <ChevronRight className="size-4" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
@@ -184,12 +252,11 @@ export default function Home() {
               className="w-full flex justify-center"
             >
               <CategorizationStep
-                papers={searchResult?.papers || []}
-                onCategorizationComplete={handleCategorizationComplete}
                 inputValue={categorizationInput}
                 onInputChange={setCategorizationInput}
                 categorizationInfo={categorizationInfo}
                 onCategorizationInfoChange={setCategorizationInfo}
+                externalError={categorizationError}
               />
             </motion.main>
           )}
