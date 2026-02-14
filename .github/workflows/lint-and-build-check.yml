@@ -1,0 +1,29 @@
+# エラーがある場合にビルド・デプロイをしてしまうとページが正常に見れなくなるので、エラーがあるかどうかを事前にチェックするためのワークフロー
+name: Lint And Build Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "src/**"
+
+jobs:
+  lint-and-build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18.x"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
