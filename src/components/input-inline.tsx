@@ -249,7 +249,7 @@ export function InputInline({
         <label className="text-sm font-medium">検索キーワード</label>
         <Input
           type="search"
-          placeholder="例: Diffusion, 3DGS, 静的バイアス関連"
+          placeholder="例: Diffusion, 3DGS, Tracking, NeRF, LoRA, Static Bias, VLM, Multimodal"
           className="h-12 text-lg"
           value={keyword}
           onChange={(e) => onKeywordChange(e.target.value)}

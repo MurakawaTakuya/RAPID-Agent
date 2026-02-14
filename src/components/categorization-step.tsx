@@ -33,8 +33,10 @@ export function CategorizationStep({
   const [isEditing, setIsEditing] = useState(false);
   const [editedInfo, setEditedInfo] = useState<CategorizationInfo | null>(null);
 
-  const handleGenerateInfo = async () => {
-    if (!user || !inputValue.trim()) return;
+  const handleGenerateInfo = async (text?: string) => {
+    const inputToUse = typeof text === "string" ? text : inputValue;
+
+    if (!user || !inputToUse.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -54,7 +56,7 @@ export function CategorizationStep({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          input: inputValue,
+          input: inputToUse,
           paper_titles: paperTitles,
         }),
       });
@@ -79,6 +81,15 @@ export function CategorizationStep({
       setLoading(false);
     }
   };
+
+  const SAMPLE_PROMPTS = [
+    "手法で分類",
+    "タスクで分類",
+    "モデルアーキテクチャで分類",
+    "問題設定・研究目標で分類",
+    "応用分野で分類",
+    "いい感じに分類",
+  ];
 
   const startEditing = () => {
     if (categorizationInfo) {
@@ -160,7 +171,7 @@ export function CategorizationStep({
             }}
           />
           <Button
-            onClick={handleGenerateInfo}
+            onClick={() => handleGenerateInfo()}
             disabled={loading || !inputValue.trim()}
             className="h-[100px] px-6 flex flex-col gap-2"
           >
@@ -173,6 +184,23 @@ export function CategorizationStep({
               </>
             )}
           </Button>
+        </div>
+
+        {/* Sample Prompts */}
+        <div className="flex flex-wrap gap-2">
+          {SAMPLE_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              onClick={() => {
+                onInputChange(prompt);
+                handleGenerateInfo(prompt);
+              }}
+              className="text-xs px-3 py-1.5 rounded-full border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-left cursor-pointer"
+              disabled={loading}
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
       </div>
 
