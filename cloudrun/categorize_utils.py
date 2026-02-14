@@ -104,7 +104,7 @@ def llm_suggest_categorization(
     }
     """
 
-    prompt = """
+    system_instruction = """
     コンピュータビジョン分野の論文のカテゴリ分けの準備をします．
     [ユーザー入力]に適した[分類軸テーマ]とそれに準ずる[カテゴリ]集合を以下の例に従って出力してください．
     注意点："content"は簡潔に,検索に使われるキーワードやフレーズを中心に記述してください．
@@ -137,7 +137,7 @@ def llm_suggest_categorization(
         ]
     }
     """
-    prompt += f'\n[ユーザー入力]： """{user_input}"""\n出力：\n'
+    user_message = f'[ユーザー入力]： """{user_input}"""\n出力：\n'
 
     tools = [
         types.Tool(google_search=types.GoogleSearch()),
@@ -146,9 +146,10 @@ def llm_suggest_categorization(
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt,
+        contents=user_message,
         config=GenerateContentConfig(
             response_modalities=["TEXT"],
+            system_instruction=system_instruction,
             tools=tools,
         ),
     )
