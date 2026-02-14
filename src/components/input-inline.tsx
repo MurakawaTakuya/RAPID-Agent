@@ -254,7 +254,13 @@ export function InputInline({
           value={keyword}
           onChange={(e) => onKeywordChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && keyword.trim()) handleSearch();
+            if (
+              e.key === "Enter" &&
+              !e.nativeEvent.isComposing &&
+              keyword.trim()
+            ) {
+              handleSearch();
+            }
           }}
           disabled={loading}
         />

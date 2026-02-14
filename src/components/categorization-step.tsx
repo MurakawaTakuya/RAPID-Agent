@@ -139,6 +139,17 @@ export function CategorizationStep({
             onChange={(e) => onInputChange(e.target.value)}
             placeholder="例: 手法（Diffusion, GAN, VAE...）で分類して。あるいは、応用分野（医療、自動運転...）で。"
             className="flex-1 min-h-[100px] text-base"
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey &&
+                !e.nativeEvent.isComposing &&
+                inputValue.trim()
+              ) {
+                e.preventDefault();
+                handleGenerateInfo();
+              }
+            }}
           />
           <Button
             onClick={handleGenerateInfo}
