@@ -221,9 +221,14 @@ export default function Home() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
-              <h2 className="text-2xl font-bold mt-3">
-                興味のある論文を検索しましょう
-              </h2>
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl font-bold mt-13">
+                  興味のある論文を検索しましょう
+                </h2>
+                <p className="text-muted-foreground">
+                  キーワードや会議名で論文を絞り込みます
+                </p>
+              </div>
               <InputInline
                 result={searchResult}
                 onResultChange={setSearchResult}

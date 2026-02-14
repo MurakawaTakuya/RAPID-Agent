@@ -72,7 +72,7 @@ export function CategorizationStep({
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl px-4 items-center pb-24">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">グループ化の設定</h2>
+        <h2 className="text-2xl font-bold mt-13">グループ化の設定</h2>
         <p className="text-muted-foreground">
           AIを使って論文を自動で分類・整理します
         </p>
