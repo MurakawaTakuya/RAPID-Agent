@@ -13,7 +13,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from categorize_utils import llm_suggest_categorization, categorize_papers
 
-
+# Default similarity threshold for paper search
+DEFAULT_SIMILARITY_THRESHOLD = 0.66
 
 
 
@@ -150,13 +151,13 @@ def search():
                 year = int(match.group(2))  # e.g., 2025
                 conference_filters.append((name_key, year))
 
-        # Get threshold from request, default to 0.66
+        # Get threshold from request, default to DEFAULT_SIMILARITY_THRESHOLD
         try:
-            similarity_threshold = float(data.get("threshold", 0.66))
+            similarity_threshold = float(data.get("threshold", DEFAULT_SIMILARITY_THRESHOLD))
             if not (0 <= similarity_threshold <= 1):
                 return jsonify({"error": "Invalid threshold: must be between 0 and 1"}), 400
         except (ValueError, TypeError):
-            similarity_threshold = 0.66
+            similarity_threshold = DEFAULT_SIMILARITY_THRESHOLD
 
         # Initialize Client (API Key or Vertex AI)
         client = init_genai_client()

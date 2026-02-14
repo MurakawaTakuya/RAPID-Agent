@@ -15,6 +15,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+// Default similarity threshold for paper search (must match backend)
+const DEFAULT_SIMILARITY_THRESHOLD = 0.66;
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -37,7 +40,9 @@ export default function Home() {
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState<string>("");
-  const [threshold, setThreshold] = useState<number[]>([0.66]);
+  const [threshold, setThreshold] = useState<number[]>([
+    DEFAULT_SIMILARITY_THRESHOLD,
+  ]);
 
   if (loading) {
     return null; // Or a loading spinner
