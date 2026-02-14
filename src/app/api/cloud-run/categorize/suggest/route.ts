@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // remove trailing slash if exists
     const baseUrl = cloudRunUrl.replace(/\/$/, "");
-    const response = await fetch(`${baseUrl}/categorize/info`, {
+    const response = await fetch(`${baseUrl}/categorize/suggest`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -85,7 +85,7 @@ def _extract_json(text: str) -> dict:
     raise ValueError("Failed to parse JSON from model response.")
 
 
-def generate_categorize_info(
+def suggest_categorization(
     client: genai.Client, user_input: str
 ) -> dict:
     """
@@ -153,17 +153,17 @@ def generate_categorize_info(
         ),
     )
     text = response.text
-    categorize_info = _extract_json(text)
+    suggestions = _extract_json(text)
 
-    for category in categorize_info["categories"]:
+    for category in suggestions["categories"]:
         category["content"] = category["content"].replace("\n", " ").strip()
 
-    return categorize_info
+    return suggestions
 
 
 def categorize_papers(
     client: genai.Client,
-    categorize_info: dict,
+    suggestions: dict,
     papers: list[dict],
     threshold: float = 0.65
 ):
@@ -208,13 +208,13 @@ def categorize_papers(
     for paper in original_papers:
         paper["categories"] = []  # カテゴリリストを初期化. 再利用時のため.
 
-    queries = [f"{category['title']}: {category['content']}" for category in categorize_info["categories"]]
+    queries = [f"{category['title']}: {category['content']}" for category in suggestions["categories"]]
     query_embeddings = _generate_query_embeddings(client, queries)
 
     result = {
-        "info": categorize_info,
+        "info": suggestions,
     }
-    for q_emb, category in zip(query_embeddings, categorize_info["categories"]):
+    for q_emb, category in zip(query_embeddings, suggestions["categories"]):
         category_title = category["title"]
         similar_papers = _fetch_similar_papers(
             original_papers,

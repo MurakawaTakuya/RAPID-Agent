@@ -11,7 +11,7 @@ from google.genai import types
 from google.genai.types import EmbedContentConfig
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from categorize_utils import generate_categorize_info, categorize_papers
+from categorize_utils import suggest_categorization, categorize_papers
 
 
 # Configure logging for Cloud Run
@@ -309,8 +309,8 @@ def _verify_token(request):
         return None, f"Unauthorized: {str(e)}"
 
 
-@app.route("/categorize/info", methods=["POST"])
-def categorize_info():
+@app.route("/categorize/suggest", methods=["POST"])
+def suggest_categorization():
     uid, error = _verify_token(request)
     if error:
         log_structured("WARNING", "Unauthorized request", error=error)
@@ -323,16 +323,15 @@ def categorize_info():
         return jsonify({"error": "Input is required"}), 400
 
     request_id = str(uuid.uuid4())[:8]
-    log_structured("INFO", "Generating categorization info", request_id=request_id, uid=uid, length=len(user_input))
+    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input))
 
     try:
         client = init_genai_client()
-        info = generate_categorize_info(client, user_input)
-        return jsonify(info)
+        suggestions = suggest_categorization(client, user_input)
+        return jsonify(suggestions)
     except Exception as e:
-        log_structured("ERROR", "Error in categorize_info", request_id=request_id, error=str(e))
-        return jsonify({"error": str(e)}), 500
-
+        log_structured("ERROR", "Error in suggest_categorization", request_id=request_id, error=str(e))
+        return jsonify({"error": "Internal Server Error"}), 500
 
 @app.route("/categorize/run", methods=["POST"])
 def run_categorization():
@@ -409,7 +408,7 @@ def run_categorization():
 
     except Exception as e:
         log_structured("ERROR", "Error in run_categorization", request_id=request_id, error=str(e))
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal Server Error"}), 500
     finally:
         if conn:
             conn.close()
