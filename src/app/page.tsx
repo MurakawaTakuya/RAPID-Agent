@@ -41,7 +41,7 @@ export default function Home() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center px-4 mb-2 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
+      <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
         <div className="flex items-center gap-2 w-[120px]">
           <SidebarTrigger className="-ml-1" />
         </div>
@@ -56,7 +56,7 @@ export default function Home() {
       </header>
       <div className="flex flex-1 items-center justify-center pb-24 overflow-hidden w-full relative">
         {/* Navigation Buttons */}
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-0 left-4 z-20">
           <AnimatePresence>
             {currentStep > 1 && (
               <motion.div
@@ -70,14 +70,14 @@ export default function Home() {
                   className="gap-1"
                 >
                   <ChevronLeft className="size-4" />
-                  Back
+                  検索し直す
                 </Button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-0 right-4 z-20">
           <AnimatePresence>
             {currentStep === 1 &&
               searchResult?.papers &&
@@ -88,7 +88,7 @@ export default function Home() {
                   exit={{ opacity: 0, x: 10 }}
                 >
                   <Button onClick={handleNext} className="gap-1">
-                    Next
+                    グループ化する
                     <ChevronRight className="size-4" />
                   </Button>
                 </motion.div>
@@ -106,8 +106,8 @@ export default function Home() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
-              <h2 className="text-2xl font-bold">
-                どの学会や論文を検索しますか?
+              <h2 className="text-2xl font-bold mt-3">
+                興味のある論文を検索しましょう
               </h2>
               <InputInline
                 result={searchResult}

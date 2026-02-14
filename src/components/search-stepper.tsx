@@ -23,15 +23,15 @@ interface SearchStepperProps {
 
 const steps = [
   {
-    title: "Search",
+    title: "検索",
     icon: <SearchIcon className="size-4" />,
   },
   {
-    title: "Review",
+    title: "グループ化",
     icon: <FileTextIcon className="size-4" />,
   },
   {
-    title: "Generate",
+    title: "Hoge",
     icon: <SendIcon className="size-4" />,
   },
 ];
