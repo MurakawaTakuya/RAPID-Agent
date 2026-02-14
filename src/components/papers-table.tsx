@@ -17,10 +17,10 @@ interface PapersTableProps {
   papers: Paper[];
   selectedPapers: Set<number>;
   message: string;
-  onToggleSelectAll: () => void;
-  onTogglePaperSelection: (paperId: number) => void;
-  onDeletePaper: (paperId: number) => void;
-  onDeleteSelected: () => void;
+  onToggleSelectAll?: () => void;
+  onTogglePaperSelection?: (paperId: number) => void;
+  onDeletePaper?: (paperId: number) => void;
+  onDeleteSelected?: () => void;
   readOnly?: boolean;
   showSimilarity?: boolean;
 }
@@ -59,7 +59,7 @@ export function PapersTable({
     <div className="max-w-7xl w-full space-y-3">
       <div className="flex items-center justify-between">
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>
-        {!readOnly && selectedPapers.size > 0 && (
+        {!readOnly && selectedPapers.size > 0 && onDeleteSelected && (
           <Button variant="destructive" size="sm" onClick={onDeleteSelected}>
             選択した{selectedPapers.size}件を削除
           </Button>
@@ -71,7 +71,7 @@ export function PapersTable({
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr className="border-b">
-                {!readOnly && (
+                {!readOnly && onToggleSelectAll && (
                   <th className="w-12 px-4 py-3 align-middle">
                     <div className="flex items-center justify-center h-full">
                       <input
@@ -97,7 +97,7 @@ export function PapersTable({
                     Similarity
                   </th>
                 )}
-                {!readOnly && (
+                {!readOnly && onDeletePaper && (
                   <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
                     Delete
                   </th>
@@ -114,7 +114,7 @@ export function PapersTable({
                       : ""
                   }`}
                 >
-                  {!readOnly && (
+                  {!readOnly && onTogglePaperSelection && (
                     <td className="px-4 py-4 align-middle">
                       <input
                         type="checkbox"
@@ -170,7 +170,7 @@ export function PapersTable({
                         )}
                     </td>
                   )}
-                  {!readOnly && (
+                  {!readOnly && onDeletePaper && (
                     <td className="pl-1 pr-4 py-4 text-center">
                       <button
                         onClick={() => onDeletePaper(paper.id)}

@@ -13,6 +13,11 @@ export interface Category {
   content: string;
 }
 
+export interface CategorizedPaper extends Omit<Paper, "cosineSimilarity"> {
+  cosineSimilarity?: number | null;
+  categories?: string[];
+}
+
 export interface CategorizationInfo {
   title: string;
   categories: Category[];
@@ -21,7 +26,7 @@ export interface CategorizationInfo {
 interface CategorizationStepProps {
   papers: Paper[];
   onCategorizationComplete: (
-    result: Record<string, Paper[]>,
+    result: Record<string, CategorizedPaper[]>,
     info: CategorizationInfo
   ) => void;
   inputValue: string;
@@ -61,8 +66,11 @@ export function CategorizationStep({
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to generate categories");
+        const errorMessage = await parseErrorResponse(
+          response,
+          "Failed to generate categories"
+        );
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -98,8 +106,11 @@ export function CategorizationStep({
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to categorize papers");
+        const errorMessage = await parseErrorResponse(
+          response,
+          "Failed to categorize papers"
+        );
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -169,9 +180,9 @@ export function CategorizationStep({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {categorizationInfo.categories.map((cat, idx) => (
+            {categorizationInfo.categories.map((cat) => (
               <div
-                key={idx}
+                key={cat.title}
                 className="p-4 border rounded-md bg-background/50 hover:bg-background transition-colors"
               >
                 <div className="font-medium text-primary mb-1">{cat.title}</div>
@@ -209,4 +220,23 @@ export function CategorizationStep({
       )}
     </div>
   );
+}
+
+async function parseErrorResponse(
+  response: Response,
+  defaultMessage: string
+): Promise<string> {
+  const contentType = response.headers.get("content-type");
+  try {
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      if (typeof data === "object" && data !== null && "error" in data) {
+        return data.error || defaultMessage;
+      }
+    }
+    const text = await response.text();
+    return text.slice(0, 200) || defaultMessage;
+  } catch {
+    return `${defaultMessage}: ${response.status} ${response.statusText}`;
+  }
 }

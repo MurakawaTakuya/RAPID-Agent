@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import os
-import logging
+
 import json
 import uuid
 import re
@@ -15,12 +15,7 @@ from categorize_utils import llm_suggest_categorization, categorize_papers
 
 
 
-# Configure logging for Cloud Run
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(message)s'
-)
-logger = logging.getLogger(__name__)
+
 
 def log_structured(severity: str, message: str, **kwargs):
     """Log in structured format for Cloud Logging"""
@@ -44,7 +39,7 @@ def get_db_connection():
         conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
         return conn
     except Exception as e:
-        logger.error(f"Error connecting to database: {e}")
+        log_structured("ERROR", "Error connecting to database", error=str(e))
         return None
 SEARCH_SYSTEM_INSTRUCTION = """
 あなたは論文検索アシスタントです。ユーザーのキーワードについて最新情報を検索し、関連する論文をリストアップしてください。
@@ -119,7 +114,7 @@ def search():
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token['uid']
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         keyword = data.get("keyword", "") if data else ""
         
         if not keyword or not isinstance(keyword, str) or not keyword.strip():
@@ -289,8 +284,8 @@ def _verify_token(request):
         decoded_token = auth.verify_id_token(token)
         return decoded_token['uid'], None
     except Exception as e:
-        logger.error(f"Auth error: {e}")
-        return None, f"Unauthorized: {str(e)}"
+        log_structured("ERROR", "Auth error", error=str(e))
+        return None, "Unauthorized: Invalid or expired token"
 
 
 @app.route("/categorize/suggest", methods=["POST"])
@@ -300,7 +295,7 @@ def suggest_categorization():
         log_structured("WARNING", "Unauthorized request", error=error)
         return jsonify({"error": error}), 401
     
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     user_input = data.get("input", "")
     
     if not user_input:
@@ -324,7 +319,7 @@ def run_categorization():
         log_structured("WARNING", "Unauthorized request", error=error)
         return jsonify({"error": error}), 401
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     categorize_info_data = data.get("info")
     paper_ids = data.get("paper_ids", [])
     
@@ -353,7 +348,7 @@ def run_categorization():
                      embedding = json.loads(row["embedding_str"])
                  except (json.JSONDecodeError, TypeError):
                      # Fallback or skip if embedding is invalid
-                     logger.warning(f"Failed to parse embedding for paper {row['id']}")
+                     log_structured("WARNING", f"Failed to parse embedding for paper {row['id']}", paper_id=row['id'])
                      continue
 
                  papers.append({
