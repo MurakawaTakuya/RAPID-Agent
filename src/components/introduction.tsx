@@ -84,42 +84,44 @@ export function Introduction() {
         >
           <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
           <span className="relative flex items-center justify-center gap-2">
-            {loading ? "Loading..." : "Get Started"}
+            {loading ? "読み込み中..." : "始める"}
             {!loading && (
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
             )}
           </span>
         </button>
         <p className="text-sm text-muted-foreground">
-          Google Account login required
+          Googleアカウントでのログインが必要です
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-5xl text-left z-10">
         <MagicCard className="rounded-xl">
           <div className="p-6">
-            <h3 className="font-semibold text-lg mb-2">Smart Search</h3>
+            <h3 className="font-semibold text-lg mb-2">ベクトル検索</h3>
             <p className="text-muted-foreground">
-              Find relevant papers using natural language queries powered by
-              advanced embeddings.
+              Embeddingを使用して、キーワードに関連する論文を素早く検索します。
+              LLMのように生成結果を待つ必要はありません．
             </p>
           </div>
         </MagicCard>
         <MagicCard className="rounded-xl">
           <div className="p-6">
-            <h3 className="font-semibold text-lg mb-2">AI Analysis</h3>
+            <h3 className="font-semibold text-lg mb-2">
+              スマートフィルタリング
+            </h3>
             <p className="text-muted-foreground">
-              Get instant summaries and insights from papers without reading the
-              entire document.
+              CVPR, ICCV, ECCVなどの主要カンファレンスや開催年で絞り込み、
+              トレンドや質の高い研究を素早く見つけ出します。
             </p>
           </div>
         </MagicCard>
         <MagicCard className="rounded-xl">
           <div className="p-6">
-            <h3 className="font-semibold text-lg mb-2">Organized Library</h3>
+            <h3 className="font-semibold text-lg mb-2">LLM自動分類</h3>
             <p className="text-muted-foreground">
-              Save interesting papers to your personal library and manage them
-              with ease.
+              検索した論文を「手法」や「タスク」などに、ベクトル検索を使用して素早く分類・整理します。
+              分類方法はLLMがサポートします。
             </p>
           </div>
         </MagicCard>
