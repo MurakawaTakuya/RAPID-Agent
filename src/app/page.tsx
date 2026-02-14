@@ -1,7 +1,12 @@
 "use client";
-import { CategorizationStep } from "@/components/categorization-step";
+import { CategorizationResults } from "@/components/categorization-results";
+import {
+  CategorizationInfo,
+  CategorizationStep,
+} from "@/components/categorization-step";
 import { InputInline, SearchResult } from "@/components/input-inline";
 import { Introduction } from "@/components/introduction";
+import { Paper } from "@/components/papers-table";
 import { SearchStepper } from "@/components/search-stepper";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
@@ -15,6 +20,14 @@ export default function Home() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+
+  // Categorization state
+  const [categorizationInfo, setCategorizationInfo] =
+    useState<CategorizationInfo | null>(null);
+  const [groupedPapers, setGroupedPapers] = useState<Record<
+    string,
+    Paper[]
+  > | null>(null);
 
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
@@ -43,6 +56,15 @@ export default function Home() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleCategorizationComplete = (
+    result: Record<string, Paper[]>,
+    info: CategorizationInfo
+  ) => {
+    setGroupedPapers(result);
+    setCategorizationInfo(info);
+    setCurrentStep(3);
   };
 
   return (
@@ -76,7 +98,7 @@ export default function Home() {
                   className="gap-1"
                 >
                   <ChevronLeft className="size-4" />
-                  検索し直す
+                  戻る
                 </Button>
               </motion.div>
             )}
@@ -137,7 +159,26 @@ export default function Home() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="w-full flex justify-center"
             >
-              <CategorizationStep papers={searchResult?.papers || []} />
+              <CategorizationStep
+                papers={searchResult?.papers || []}
+                onCategorizationComplete={handleCategorizationComplete}
+              />
+            </motion.main>
+          )}
+
+          {currentStep === 3 && groupedPapers && categorizationInfo && (
+            <motion.main
+              key="step3"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="w-full flex justify-center"
+            >
+              <CategorizationResults
+                groupedPapers={groupedPapers}
+                categories={categorizationInfo.categories}
+              />
             </motion.main>
           )}
         </AnimatePresence>
