@@ -19,6 +19,7 @@ import { useState } from "react";
 export default function Home() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [direction, setDirection] = useState(0);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
 
   // Categorization state
@@ -48,12 +49,14 @@ export default function Home() {
       searchResult?.papers &&
       searchResult.papers.length > 0
     ) {
+      setDirection(1);
       setCurrentStep(2);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
+      setDirection(-1);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -64,7 +67,23 @@ export default function Home() {
   ) => {
     setGroupedPapers(result);
     setCategorizationInfo(info);
+    setDirection(1);
     setCurrentStep(3);
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 100 : -100,
+      opacity: 0,
+    }),
   };
 
   return (
@@ -124,13 +143,15 @@ export default function Home() {
           </AnimatePresence>
         </div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={direction}>
           {currentStep === 1 && (
             <motion.main
               key="step1"
-              initial={{ opacity: 0, x: -100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
@@ -153,9 +174,11 @@ export default function Home() {
           {currentStep === 2 && (
             <motion.main
               key="step2"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="w-full flex justify-center"
             >
@@ -169,9 +192,11 @@ export default function Home() {
           {currentStep === 3 && groupedPapers && categorizationInfo && (
             <motion.main
               key="step3"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="w-full flex justify-center"
             >
