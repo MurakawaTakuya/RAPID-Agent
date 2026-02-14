@@ -117,7 +117,7 @@ export default function Home() {
 
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 100 : -100,
+      x: direction >= 0 ? 100 : -100,
       opacity: 0,
     }),
     center: {
