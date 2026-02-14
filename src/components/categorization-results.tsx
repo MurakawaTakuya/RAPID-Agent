@@ -19,7 +19,7 @@ export function CategorizationResults({
       <div className="text-center space-y-2 mb-8">
         <h2 className="text-2xl font-bold mt-13">分類結果</h2>
         <p className="text-muted-foreground">
-          AIによってグループ化された論文一覧です
+          AIによって分類された論文一覧です
         </p>
       </div>
 

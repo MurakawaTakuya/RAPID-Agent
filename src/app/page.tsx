@@ -179,7 +179,7 @@ export default function Home() {
                   exit={{ opacity: 0, x: 10 }}
                 >
                   <Button onClick={handleNext} className="gap-1">
-                    グループ化する
+                    分類方法を設定する
                     <ChevronRight className="size-4" />
                   </Button>
                 </motion.div>

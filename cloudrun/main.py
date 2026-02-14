@@ -254,8 +254,8 @@ def search():
                     "count": len(papers),
                     "threshold": similarity_threshold,
                     "message": (
-                        f"Found {len(papers)} papers "
-                        f"(cosine similarity ≥ {similarity_threshold})"
+                        f"{len(papers)}件の論文が見つかりました "
+                        f"(コサイン類似度 ≥ {similarity_threshold})"
                     ),
                 })
                 

@@ -122,9 +122,9 @@ export function CategorizationStep({
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl px-4 items-center pb-24">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold mt-13">グループ化の設定</h2>
+        <h2 className="text-2xl font-bold mt-13">分類方法の設定</h2>
         <p className="text-muted-foreground">
-          論文をどのように分類するかAIと相談できます
+          論文をどのように分類したいですか？
         </p>
       </div>
 
@@ -170,7 +170,7 @@ export function CategorizationStep({
 
       {/* Suggestion Display / Edit */}
       {categorizationInfo && (
-        <div className="w-full max-w-3xl border rounded-lg p-6 bg-card space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <div className="w-full max-w-3xl border rounded-lg p-6 bg-card space-y-6 animate-in fade-in duration-500 relative">
           {!isEditing ? (
             // Display Mode
             <>

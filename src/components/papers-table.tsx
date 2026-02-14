@@ -75,22 +75,22 @@ export function PapersTable({
                   </th>
                 )}
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
-                  Title
+                  論文タイトル
                 </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground whitespace-nowrap w-32">
-                  Conference
+                  学会名・年
                 </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
-                  Abstract
+                  概要
                 </th>
                 {showSimilarity && (
                   <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
-                    Similarity
+                    類似度
                   </th>
                 )}
                 {!readOnly && onDeletePaper && (
                   <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
-                    Delete
+                    除外
                   </th>
                 )}
               </tr>
