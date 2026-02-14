@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 
 import { Paper, PapersTable } from "@/components/papers-table";
 
-interface SearchResult {
+export interface SearchResult {
   conferences: string[];
   keyword: string;
   papers: Paper[];
@@ -30,10 +30,11 @@ interface ConferenceGroup {
 }
 
 export interface InputInlineProps {
-  onNext?: (data: { papers: Paper[] }) => void;
+  result: SearchResult | null;
+  onResultChange: (result: SearchResult | null) => void;
 }
 
-export function InputInline({ onNext }: InputInlineProps) {
+export function InputInline({ result, onResultChange }: InputInlineProps) {
   const [conferenceOptions, setConferenceOptions] = useState<ConferenceGroup[]>(
     []
   );
@@ -41,7 +42,6 @@ export function InputInline({ onNext }: InputInlineProps) {
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState("");
   const [threshold, setThreshold] = useState([0.65]);
-  const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedPapers, setSelectedPapers] = useState<Set<number>>(new Set());
@@ -91,7 +91,7 @@ export function InputInline({ onNext }: InputInlineProps) {
     if (!user) return;
 
     setError(null);
-    setResult(null);
+    onResultChange(null);
     setSelectedPapers(new Set()); // Reset selection on new search
 
     // Validation: Conference selection is required
@@ -131,7 +131,7 @@ export function InputInline({ onNext }: InputInlineProps) {
       const data = await response.json();
       if (response.ok) {
         if (data.papers) {
-          setResult(data);
+          onResultChange(data);
         } else if (data.error) {
           setError(data.error);
         } else {
@@ -179,7 +179,7 @@ export function InputInline({ onNext }: InputInlineProps) {
     const remainingPapers = result.papers.filter(
       (paper) => !selectedPapers.has(paper.id)
     );
-    setResult({
+    onResultChange({
       ...result,
       papers: remainingPapers,
       count: remainingPapers.length,
@@ -193,7 +193,7 @@ export function InputInline({ onNext }: InputInlineProps) {
     const remainingPapers = result.papers.filter(
       (paper) => paper.id !== paperId
     );
-    setResult({
+    onResultChange({
       ...result,
       papers: remainingPapers,
       count: remainingPapers.length,
@@ -327,28 +327,6 @@ export function InputInline({ onNext }: InputInlineProps) {
       <div className="w-full py-2 text-center text-sm text-muted-foreground mt-auto">
         最大500件まで検索できます
       </div>
-
-      {selectedPapers.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-background/80 backdrop-blur-md border rounded-full shadow-lg p-2 pr-4 flex items-center gap-4">
-            <span className="pl-4 text-sm font-medium">
-              {selectedPapers.size}件選択中
-            </span>
-            <Button
-              onClick={() =>
-                onNext?.({
-                  papers:
-                    result?.papers?.filter((p) => selectedPapers.has(p.id)) ||
-                    [],
-                })
-              }
-              className="rounded-full px-6"
-            >
-              次へ進む
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
