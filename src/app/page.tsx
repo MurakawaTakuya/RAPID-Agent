@@ -1,4 +1,5 @@
 "use client";
+import { CategorizationStep } from "@/components/categorization-step";
 import { InputInline, SearchResult } from "@/components/input-inline";
 import { Introduction } from "@/components/introduction";
 import { SearchStepper } from "@/components/search-stepper";
@@ -134,18 +135,9 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
+              className="w-full flex justify-center"
             >
-              <h2 className="text-2xl font-bold">Search Selection Confirmed</h2>
-              <div className="p-8 border rounded-lg bg-card w-full max-w-3xl">
-                <p>Selected {searchResult?.papers.length} papers.</p>
-                {/* Placeholder for Next Step content */}
-                <div className="mt-4">
-                  <p className="text-muted-foreground">
-                    Next screen content goes here...
-                  </p>
-                </div>
-              </div>
+              <CategorizationStep papers={searchResult?.papers || []} />
             </motion.main>
           )}
         </AnimatePresence>

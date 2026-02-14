@@ -4,6 +4,9 @@ from google.genai.types import GenerateContentConfig, EmbedContentConfig
 import json
 import re
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 BATCH_SIZE = 250

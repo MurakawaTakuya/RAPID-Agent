@@ -11,6 +11,7 @@ from google.genai import types
 from google.genai.types import EmbedContentConfig
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from categorize_utils import generate_categorize_info, categorize_papers
 
 
 # Configure logging for Cloud Run
@@ -293,7 +294,125 @@ def search():
         )
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
-if __name__ == "__main__":
+def _verify_token(request):
+    """Verify Firebase ID token"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None, "Unauthorized: No token provided"
+    
+    token = auth_header.split("Bearer ")[1]
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token['uid'], None
+    except Exception as e:
+        logger.error(f"Auth error: {e}")
+        return None, f"Unauthorized: {str(e)}"
+
+
+@app.route("/categorize/info", methods=["POST"])
+def categorize_info():
+    uid, error = _verify_token(request)
+    if error:
+        log_structured("WARNING", "Unauthorized request", error=error)
+        return jsonify({"error": error}), 401
+    
+    data = request.get_json()
+    user_input = data.get("input", "")
+    
+    if not user_input:
+        return jsonify({"error": "Input is required"}), 400
+
+    request_id = str(uuid.uuid4())[:8]
+    log_structured("INFO", "Generating categorization info", request_id=request_id, uid=uid, length=len(user_input))
+
+    try:
+        client = init_genai_client()
+        info = generate_categorize_info(client, user_input)
+        return jsonify(info)
+    except Exception as e:
+        log_structured("ERROR", "Error in categorize_info", request_id=request_id, error=str(e))
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/categorize/run", methods=["POST"])
+def run_categorization():
+    uid, error = _verify_token(request)
+    if error:
+        log_structured("WARNING", "Unauthorized request", error=error)
+        return jsonify({"error": error}), 401
+
+    data = request.get_json()
+    categorize_info_data = data.get("info")
+    paper_ids = data.get("paper_ids", [])
+    
+    if not categorize_info_data or not paper_ids:
+        return jsonify({"error": "Missing info or paper_ids"}), 400
+
+    request_id = str(uuid.uuid4())[:8]
+    log_structured("INFO", "Running categorization", request_id=request_id, uid=uid, papers_count=len(paper_ids))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+             return jsonify({"error": "Database connection failed"}), 500
+             
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Fetch papers with embeddings
+            query = "SELECT id, title, url, abstract, conference_name, conference_year, embedding::text as embedding_str FROM papers WHERE id = ANY(%s)"
+            cur.execute(query, (paper_ids,))
+            rows = cur.fetchall()
+            
+            papers = []
+            for row in rows:
+                 # Parse embedding from string
+                 try:
+                     embedding = json.loads(row["embedding_str"])
+                 except (json.JSONDecodeError, TypeError):
+                     # Fallback or skip if embedding is invalid
+                     logger.warning(f"Failed to parse embedding for paper {row['id']}")
+                     continue
+
+                 papers.append({
+                     "id": row["id"],
+                     "title": row["title"],
+                     "url": row["url"],
+                     "abstract": row["abstract"],
+                     "conferenceName": row["conference_name"],
+                     "conferenceYear": row["conference_year"],
+                     "embedding": embedding
+                 })
+        
+        if not papers:
+            return jsonify({"error": "No valid papers found"}), 404
+
+        client = init_genai_client()
+        result = categorize_papers(client, categorize_info_data, papers)
+        
+        # Clean result (remove embeddings)
+        cleaned_result = {}
+        for key, value in result.items():
+            if key == "info":
+                cleaned_result[key] = value
+                continue
+            
+            if isinstance(value, list):
+                cleaned_result[key] = []
+                for p in value:
+                     p_copy = p.copy()
+                     p_copy.pop("embedding", None)
+                     cleaned_result[key].append(p_copy)
+            else:
+                cleaned_result[key] = value
+
+        return jsonify(cleaned_result)
+
+    except Exception as e:
+        log_structured("ERROR", "Error in run_categorization", request_id=request_id, error=str(e))
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
     port = int(os.environ.get("PORT", 8080))
     log_structured(
         "INFO", 
