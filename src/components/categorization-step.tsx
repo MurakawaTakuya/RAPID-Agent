@@ -1,6 +1,6 @@
 "use client";
 
-import { Paper, PapersTable } from "@/components/papers-table";
+import { Paper } from "@/components/papers-table";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,30 +8,33 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 
-interface Category {
+export interface Category {
   title: string;
   content: string;
 }
 
-interface CategorizationInfo {
+export interface CategorizationInfo {
   title: string;
   categories: Category[];
 }
 
 interface CategorizationStepProps {
   papers: Paper[];
+  onCategorizationComplete: (
+    result: Record<string, Paper[]>,
+    info: CategorizationInfo
+  ) => void;
 }
 
-export function CategorizationStep({ papers }: CategorizationStepProps) {
+export function CategorizationStep({
+  papers,
+  onCategorizationComplete,
+}: CategorizationStepProps) {
   const { user } = useAuth();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [categorizationInfo, setCategorizationInfo] =
     useState<CategorizationInfo | null>(null);
-  const [groupedResult, setGroupedResult] = useState<Record<
-    string,
-    Paper[]
-  > | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerateInfo = async () => {
@@ -40,11 +43,10 @@ export function CategorizationStep({ papers }: CategorizationStepProps) {
     setLoading(true);
     setError(null);
     setCategorizationInfo(null);
-    setGroupedResult(null);
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/cloud-run/categorize/info", {
+      const response = await fetch("/api/cloud-run/categorize/suggest", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -60,8 +62,12 @@ export function CategorizationStep({ papers }: CategorizationStepProps) {
 
       const data = await response.json();
       setCategorizationInfo(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -92,9 +98,13 @@ export function CategorizationStep({ papers }: CategorizationStepProps) {
       }
 
       const data = await response.json();
-      setGroupedResult(data);
-    } catch (err: any) {
-      setError(err.message);
+      onCategorizationComplete(data, categorizationInfo);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -141,7 +151,7 @@ export function CategorizationStep({ papers }: CategorizationStepProps) {
       </div>
 
       {/* Suggestion Display */}
-      {categorizationInfo && !groupedResult && (
+      {categorizationInfo && (
         <div className="w-full max-w-3xl border rounded-lg p-6 bg-card space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-1">
             <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -184,66 +194,6 @@ export function CategorizationStep({ papers }: CategorizationStepProps) {
               )}
             </Button>
           </div>
-        </div>
-      )}
-
-      {/* Results Display */}
-      {groupedResult && (
-        <div className="w-full space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          {categorizationInfo?.categories.map((cat) => {
-            const groupPapers = groupedResult[cat.title] || [];
-            if (groupPapers.length === 0) return null;
-            return (
-              <div key={cat.title} className="space-y-4">
-                <div className="flex items-baseline gap-3 border-b pb-2">
-                  <h3 className="text-xl font-bold text-primary">
-                    {cat.title}
-                  </h3>
-                  <span className="text-sm font-medium px-2.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                    {groupPapers.length}
-                  </span>
-                  <p className="text-sm text-muted-foreground ml-auto max-w-xl text-right truncate">
-                    {cat.content}
-                  </p>
-                </div>
-
-                <PapersTable
-                  papers={groupPapers}
-                  selectedPapers={new Set()}
-                  message=""
-                  onToggleSelectAll={() => {}}
-                  onTogglePaperSelection={() => {}}
-                  onDeletePaper={() => {}}
-                  onDeleteSelected={() => {}}
-                  readOnly={true}
-                />
-              </div>
-            );
-          })}
-
-          {/* Other Papers */}
-          {groupedResult["other"] && groupedResult["other"].length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-baseline gap-3 border-b pb-2">
-                <h3 className="text-xl font-bold text-muted-foreground">
-                  その他
-                </h3>
-                <span className="text-sm font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  {groupedResult["other"].length}
-                </span>
-              </div>
-              <PapersTable
-                papers={groupedResult["other"]}
-                selectedPapers={new Set()}
-                message=""
-                onToggleSelectAll={() => {}}
-                onTogglePaperSelection={() => {}}
-                onDeletePaper={() => {}}
-                onDeleteSelected={() => {}}
-                readOnly={true}
-              />
-            </div>
-          )}
         </div>
       )}
 
