@@ -37,7 +37,7 @@ export default function Home() {
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState<string>("");
-  const [threshold, setThreshold] = useState<number[]>([0.65]);
+  const [threshold, setThreshold] = useState<number[]>([0.66]);
 
   if (loading) {
     return null; // Or a loading spinner
@@ -222,7 +222,7 @@ export default function Home() {
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold mt-13">
+                <h2 className="text-2xl font-bold mt-3">
                   興味のある論文を検索しましょう
                 </h2>
                 <p className="text-muted-foreground">
