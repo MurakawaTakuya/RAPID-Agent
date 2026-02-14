@@ -54,7 +54,7 @@ export function Introduction() {
             { letter: "A", word: "Academic" },
             { letter: "P", word: "Papers" },
             { letter: "I", word: "Into" },
-            { letter: "D", word: "Devisions" },
+            { letter: "D", word: "Divisions" },
           ].map(({ letter, word }) => (
             <div
               key={letter}

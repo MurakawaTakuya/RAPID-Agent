@@ -9,6 +9,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    // Basic validation for categorization run
+    if (
+      !body.info ||
+      typeof body.info !== "object" ||
+      !Array.isArray(body.paper_ids) ||
+      !body.paper_ids.every((id: unknown) => typeof id === "number")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid input: 'info' must be an object and 'paper_ids' must be an array of numbers",
+        },
+        { status: 400 }
+      );
+    }
+
     const cloudRunUrl = process.env.PYTHON_CLOUD_RUN_URL;
     if (!cloudRunUrl) {
       console.error("PYTHON_CLOUD_RUN_URL is not set");

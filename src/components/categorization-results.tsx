@@ -1,9 +1,10 @@
 "use client";
 
-import { Paper, PapersTable } from "@/components/papers-table";
+import { CategorizedPaper } from "@/lib/types";
+import { PapersTable } from "./papers-table";
 
 interface CategorizationResultsProps {
-  groupedPapers: Record<string, Paper[]>;
+  groupedPapers: Record<string, CategorizedPaper[]>;
   categories: { title: string; content: string }[];
 }
 
@@ -11,6 +12,8 @@ export function CategorizationResults({
   groupedPapers,
   categories,
 }: CategorizationResultsProps) {
+  const emptySet = new Set<number>();
+
   return (
     <div className="w-full space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-24 max-w-7xl px-4">
       <div className="text-center space-y-2 mb-8">
@@ -37,12 +40,8 @@ export function CategorizationResults({
 
             <PapersTable
               papers={groupPapers}
-              selectedPapers={new Set()}
+              selectedPapers={emptySet}
               message=""
-              onToggleSelectAll={() => {}}
-              onTogglePaperSelection={() => {}}
-              onDeletePaper={() => {}}
-              onDeleteSelected={() => {}}
               readOnly={true}
               showSimilarity={false}
             />
@@ -61,12 +60,8 @@ export function CategorizationResults({
           </div>
           <PapersTable
             papers={groupedPapers["other"]}
-            selectedPapers={new Set()}
+            selectedPapers={emptySet}
             message=""
-            onToggleSelectAll={() => {}}
-            onTogglePaperSelection={() => {}}
-            onDeletePaper={() => {}}
-            onDeleteSelected={() => {}}
             readOnly={true}
             showSimilarity={false}
           />

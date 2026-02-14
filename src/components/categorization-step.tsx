@@ -4,19 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { CategorizationInfo } from "@/lib/types";
 import { parseErrorResponse } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
-
-export interface Category {
-  title: string;
-  content: string;
-}
-
-export interface CategorizationInfo {
-  title: string;
-  categories: Category[];
-}
 
 interface CategorizationStepProps {
   inputValue: string;

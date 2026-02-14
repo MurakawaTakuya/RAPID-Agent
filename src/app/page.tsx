@@ -1,18 +1,15 @@
 "use client";
 import { CategorizationResults } from "@/components/categorization-results";
-import {
-  CategorizationInfo,
-  CategorizationStep,
-} from "@/components/categorization-step";
+import { CategorizationStep } from "@/components/categorization-step";
 import { InputInline, SearchResult } from "@/components/input-inline";
 import { Introduction } from "@/components/introduction";
-import { Paper } from "@/components/papers-table";
 import { SearchStepper } from "@/components/search-stepper";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { CategorizationInfo, CategorizedPaper } from "@/lib/types";
 import { parseErrorResponse } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -30,7 +27,7 @@ export default function Home() {
     useState<CategorizationInfo | null>(null);
   const [groupedPapers, setGroupedPapers] = useState<Record<
     string,
-    Paper[]
+    CategorizedPaper[]
   > | null>(null);
   const [isCategorizing, setIsCategorizing] = useState(false);
   const [categorizationError, setCategorizationError] = useState<string | null>(
@@ -69,7 +66,7 @@ export default function Home() {
   };
 
   const handleCategorizationComplete = (
-    result: Record<string, Paper[]>,
+    result: Record<string, CategorizedPaper[]>,
     info: CategorizationInfo
   ) => {
     setGroupedPapers(result);

@@ -1,10 +1,10 @@
 # RAPID Agent
 
-RAPID Agent (Retrieve Academic Papers Into Devisions) は、研究者が効率的に学術論文を発見・整理するための AI 搭載ツールです。
+RAPID Agent (Retrieve Academic Papers Into Divisions) は、研究者が効率的に学術論文を発見・整理するための AI 搭載ツールです。
 
 ## サービス概要
 
-Paper-Agent は、ベクトルベースの意味論的検索（セマンティックサーチ）と LLM による整理機能を組み合わせることで、文献レビューのプロセスを効率化します。
+RAPID Agent は、ベクトルベースの意味論的検索（セマンティックサーチ）と LLM による整理機能を組み合わせることで、文献レビューのプロセスを効率化します。
 
 ### 主な機能
 

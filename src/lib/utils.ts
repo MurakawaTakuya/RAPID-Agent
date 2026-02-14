@@ -13,7 +13,12 @@ export async function parseErrorResponse(
   try {
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
-      if (typeof data === "object" && data !== null && "error" in data) {
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "error" in data &&
+        typeof data.error === "string"
+      ) {
         return data.error || defaultMessage;
       }
     }

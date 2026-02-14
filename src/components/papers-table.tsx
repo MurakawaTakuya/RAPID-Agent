@@ -1,17 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Paper } from "@/lib/types";
 import { useState } from "react";
-
-export interface Paper {
-  id: number;
-  title: string;
-  url: string;
-  abstract: string | null;
-  conferenceName: string | null;
-  conferenceYear: number | null;
-  cosineSimilarity: number | null;
-}
 
 interface PapersTableProps {
   papers: Paper[];
