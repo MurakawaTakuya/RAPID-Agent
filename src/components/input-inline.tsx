@@ -234,6 +234,7 @@ export function InputInline({
           onValueChange={onConferencesChange}
           defaultValue={selectedConferences}
           disabled={conferencesLoading}
+          badgeAnimation="none"
           responsive={{
             mobile: { maxCount: 5 },
             tablet: { maxCount: 7 },

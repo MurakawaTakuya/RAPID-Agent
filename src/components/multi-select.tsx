@@ -312,6 +312,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       placeholder = "Select options",
       animation = 0,
       animationConfig,
+      badgeAnimation,
       maxCount = 3,
       modalPopover = false,
       asChild = false,
@@ -482,8 +483,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const responsiveSettings = getResponsiveSettings();
 
     const getBadgeAnimationClass = () => {
-      if (animationConfig?.badgeAnimation) {
-        switch (animationConfig.badgeAnimation) {
+      // Use direct badgeAnimation prop if provided, otherwise fall back to animationConfig
+      const effectiveBadgeAnimation =
+        badgeAnimation || animationConfig?.badgeAnimation;
+
+      if (effectiveBadgeAnimation) {
+        switch (effectiveBadgeAnimation) {
           case "bounce":
             return isAnimating
               ? "animate-bounce"
@@ -866,7 +871,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             key={value}
                             className={cn(
                               getBadgeAnimationClass(),
-                              multiSelectVariants({ variant }),
+                              multiSelectVariants({
+                                variant,
+                                badgeAnimation:
+                                  badgeAnimation ||
+                                  animationConfig?.badgeAnimation ||
+                                  "bounce",
+                              }),
                               customStyle?.gradient &&
                                 "text-white border-transparent",
                               responsiveSettings.compactMode &&
@@ -941,7 +952,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         className={cn(
                           "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
                           getBadgeAnimationClass(),
-                          multiSelectVariants({ variant }),
+                          multiSelectVariants({
+                            variant,
+                            badgeAnimation:
+                              badgeAnimation ||
+                              animationConfig?.badgeAnimation ||
+                              "bounce",
+                          }),
                           responsiveSettings.compactMode &&
                             "text-xs px-1.5 py-0.5",
                           singleLine && "flex-shrink-0 whitespace-nowrap",

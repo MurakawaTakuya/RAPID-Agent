@@ -60,6 +60,8 @@ uniform bool isDarkMode;
 const vec3 BLACK = vec3(0.0);
 const vec3 PINK  = vec3(233.0, 71.0, 245.0) / 255.0;
 const vec3 BLUE  = vec3(47.0,  75.0, 162.0) / 255.0;
+const vec3 CYAN  = vec3(71.0, 200.0, 245.0) / 255.0; // Light blue for light mode
+const vec3 DARK_PINK = vec3(150.0, 50.0, 160.0) / 255.0; // Darker purple for light mode
 
 mat2 rotate(float r) {
   return mat2(cos(r), sin(r), -sin(r), cos(r));
@@ -71,8 +73,12 @@ vec3 background_color(vec2 uv) {
   float y = sin(uv.x - 0.2) * 0.3 - 0.1;
   float m = uv.y - y;
 
-  col += mix(BLUE, BLACK, smoothstep(0.0, 1.0, abs(m)));
-  col += mix(PINK, BLACK, smoothstep(0.0, 1.0, abs(m - 0.8)));
+  // Use darker purple in light mode to reduce brightness
+  vec3 primaryColor = BLUE;
+  vec3 secondaryColor = isDarkMode ? PINK : DARK_PINK;
+  
+  col += mix(primaryColor, BLACK, smoothstep(0.0, 1.0, abs(m)));
+  col += mix(secondaryColor, BLACK, smoothstep(0.0, 1.0, abs(m - 0.8)));
   return col * 0.2;
 }
 

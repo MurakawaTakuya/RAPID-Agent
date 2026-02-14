@@ -196,7 +196,7 @@ export default function Home() {
                   className="gap-1"
                 >
                   {isCategorizing ? (
-                    <Spinner className="mr-2" />
+                    <Spinner />
                   ) : (
                     <>
                       この分類でグループ化する

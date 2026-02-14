@@ -74,7 +74,7 @@ export function CategorizationStep({
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold mt-13">グループ化の設定</h2>
         <p className="text-muted-foreground">
-          AIを使って論文を自動で分類・整理します
+          論文をどのように分類するかAIと相談できます
         </p>
       </div>
 

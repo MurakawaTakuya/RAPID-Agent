@@ -11,6 +11,7 @@ import {
 } from "@/components/reui/stepper";
 import {
   CheckIcon,
+  CircleDot,
   FileTextIcon,
   LoaderCircleIcon,
   SearchIcon,
@@ -23,15 +24,15 @@ interface SearchStepperProps {
 
 const steps = [
   {
-    title: "検索",
+    title: "論文検索",
     icon: <SearchIcon className="size-4" />,
   },
   {
-    title: "グループ化",
+    title: "分類方法の決定",
     icon: <Sparkles className="size-4" />,
   },
   {
-    title: "結果",
+    title: "分類結果",
     icon: <FileTextIcon className="size-4" />,
   },
 ];
@@ -55,8 +56,12 @@ export function SearchStepper({ currentStep }: SearchStepperProps) {
           >
             <StepperTrigger className="flex items-center gap-3" asChild>
               <div className="flex items-center gap-3 cursor-pointer">
-                <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-primary size-8 border-2 data-[state=completed]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary">
-                  {step.icon}
+                <StepperIndicator className="data-[state=active]:bg-background data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-primary size-8 border-2 data-[state=completed]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=active]:border-primary data-[state=active]:text-primary">
+                  {currentStep === index + 1 ? (
+                    <CircleDot className="size-4 animate-pulse" />
+                  ) : (
+                    step.icon
+                  )}
                 </StepperIndicator>
                 <div className="flex flex-col items-start">
                   <StepperTitle className="text-sm font-semibold">
