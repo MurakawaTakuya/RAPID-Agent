@@ -85,7 +85,7 @@ def extract_json_from_response(text: str) -> dict:
     raise ValueError("Failed to parse JSON from model response.")
 
 
-def suggest_categorization(
+def llm_suggest_categorization(
     client: genai.Client, user_input: str
 ) -> dict:
     """
