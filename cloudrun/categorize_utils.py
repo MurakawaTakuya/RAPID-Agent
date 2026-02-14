@@ -139,8 +139,22 @@ def llm_suggest_categorization(
     }
     """
     
-    papers_text = "\n".join([f"- Title: {p.get('title')}\n  Abstract: {p.get('abstract')}" for p in papers])
-    user_message = f'[ユーザー入力]： """{user_input}"""\n\n[検索された論文リスト]:\n{papers_text}\n\n出力：\n'
+    papers_section = "\n\n[検索された論文リスト]: なし"
+    if papers:
+        papers_text_lines = []
+        for p in papers:
+            abstract = p.get("abstract")
+            # Skip papers without an abstract to avoid degrading prompt quality.
+            if not abstract:
+                continue
+            title = p.get("title") or "No title available"
+            papers_text_lines.append(f"- Title: {title}\n  Abstract: {abstract}")
+        
+        if papers_text_lines:
+            papers_text = "\n".join(papers_text_lines)
+            papers_section = f"\n\n[検索された論文リスト]:\n{papers_text}"
+
+    user_message = f'[ユーザー入力]： """{user_input}"""{papers_section}\n\n出力：\n'
 
     tools = [
         types.Tool(google_search=types.GoogleSearch()),
