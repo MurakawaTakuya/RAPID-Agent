@@ -132,7 +132,7 @@ export default function Home() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
+      <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
         <div className="flex items-center gap-2 w-[120px]">
           <SidebarTrigger className="-ml-1" />
         </div>
