@@ -8,7 +8,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 
-import { Paper, PapersTable } from "@/components/papers-table";
+import { PapersTable } from "@/components/papers-table";
+import { Paper } from "@/lib/types";
 
 export interface SearchResult {
   conferences: string[];
