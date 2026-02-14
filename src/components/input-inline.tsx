@@ -29,7 +29,11 @@ interface ConferenceGroup {
   options: { value: string; label: string }[];
 }
 
-export function InputInline() {
+export interface InputInlineProps {
+  onNext?: (data: { papers: Paper[] }) => void;
+}
+
+export function InputInline({ onNext }: InputInlineProps) {
   const [conferenceOptions, setConferenceOptions] = useState<ConferenceGroup[]>(
     []
   );
@@ -323,6 +327,28 @@ export function InputInline() {
       <div className="w-full py-2 text-center text-sm text-muted-foreground mt-auto">
         最大500件まで検索できます
       </div>
+
+      {selectedPapers.size > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-background/80 backdrop-blur-md border rounded-full shadow-lg p-2 pr-4 flex items-center gap-4">
+            <span className="pl-4 text-sm font-medium">
+              {selectedPapers.size}件選択中
+            </span>
+            <Button
+              onClick={() =>
+                onNext?.({
+                  papers:
+                    result?.papers?.filter((p) => selectedPapers.has(p.id)) ||
+                    [],
+                })
+              }
+              className="rounded-full px-6"
+            >
+              次へ進む
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
