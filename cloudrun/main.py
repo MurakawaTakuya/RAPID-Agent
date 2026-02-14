@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import os
-import logging
+
 import json
 import uuid
 import re
@@ -11,14 +11,11 @@ from google.genai import types
 from google.genai.types import EmbedContentConfig
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from categorize_utils import llm_suggest_categorization, categorize_papers
 
 
-# Configure logging for Cloud Run
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(message)s'
-)
-logger = logging.getLogger(__name__)
+
+
 
 def log_structured(severity: str, message: str, **kwargs):
     """Log in structured format for Cloud Logging"""
@@ -42,7 +39,7 @@ def get_db_connection():
         conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
         return conn
     except Exception as e:
-        logger.error(f"Error connecting to database: {e}")
+        log_structured("ERROR", "Error connecting to database", error=str(e))
         return None
 SEARCH_SYSTEM_INSTRUCTION = """
 あなたは論文検索アシスタントです。ユーザーのキーワードについて最新情報を検索し、関連する論文をリストアップしてください。
@@ -62,24 +59,7 @@ SEARCH_SYSTEM_INSTRUCTION = """
 """
 
 
-def extract_json_from_response(text: str) -> dict | None:
-    """Extract JSON from LLM response, handling potential markdown formatting"""
-    # Remove markdown code blocks if present
-    text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
-    text = text.strip()
-    
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Try to find JSON object in the text
-        match = re.search(r'\{.*\}', text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group())
-            except json.JSONDecodeError:
-                return None
-    return None
+
 
 
 def init_genai_client():
@@ -134,7 +114,7 @@ def search():
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token['uid']
 
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         keyword = data.get("keyword", "") if data else ""
         
         if not keyword or not isinstance(keyword, str) or not keyword.strip():
@@ -293,7 +273,124 @@ def search():
         )
         return jsonify({"error": f"Error: {str(e)}"}), 500
 
-if __name__ == "__main__":
+def _verify_token(request):
+    """Verify Firebase ID token"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None, "Unauthorized: No token provided"
+    
+    token = auth_header.split("Bearer ")[1]
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token['uid'], None
+    except Exception as e:
+        log_structured("ERROR", "Auth error", error=str(e))
+        return None, "Unauthorized: Invalid or expired token"
+
+
+@app.route("/categorize/suggest", methods=["POST"])
+def suggest_categorization():
+    uid, error = _verify_token(request)
+    if error:
+        log_structured("WARNING", "Unauthorized request", error=error)
+        return jsonify({"error": error}), 401
+    
+    data = request.get_json(silent=True) or {}
+    user_input = data.get("input", "")
+    
+    if not user_input:
+        return jsonify({"error": "Input is required"}), 400
+
+    request_id = str(uuid.uuid4())[:8]
+    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input))
+
+    try:
+        client = init_genai_client()
+        suggestions = llm_suggest_categorization(client, user_input)
+        return jsonify(suggestions)
+    except Exception as e:
+        log_structured("ERROR", "Error in suggest_categorization", request_id=request_id, error=str(e))
+        return jsonify({"error": "Internal Server Error"}), 500
+
+@app.route("/categorize/run", methods=["POST"])
+def run_categorization():
+    uid, error = _verify_token(request)
+    if error:
+        log_structured("WARNING", "Unauthorized request", error=error)
+        return jsonify({"error": error}), 401
+
+    data = request.get_json(silent=True) or {}
+    categorize_info_data = data.get("info")
+    paper_ids = data.get("paper_ids", [])
+    
+    if not categorize_info_data or not paper_ids:
+        return jsonify({"error": "Missing info or paper_ids"}), 400
+
+    request_id = str(uuid.uuid4())[:8]
+    log_structured("INFO", "Running categorization", request_id=request_id, uid=uid, papers_count=len(paper_ids))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+             return jsonify({"error": "Database connection failed"}), 500
+             
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Fetch papers with embeddings
+            query = "SELECT id, title, url, abstract, conference_name, conference_year, embedding::text as embedding_str FROM papers WHERE id = ANY(%s)"
+            cur.execute(query, (paper_ids,))
+            rows = cur.fetchall()
+            
+            papers = []
+            for row in rows:
+                 # Parse embedding from string
+                 try:
+                     embedding = json.loads(row["embedding_str"])
+                 except (json.JSONDecodeError, TypeError):
+                     # Fallback or skip if embedding is invalid
+                     log_structured("WARNING", f"Failed to parse embedding for paper {row['id']}", paper_id=row['id'])
+                     continue
+
+                 papers.append({
+                     "id": row["id"],
+                     "title": row["title"],
+                     "url": row["url"],
+                     "abstract": row["abstract"],
+                     "conferenceName": row["conference_name"],
+                     "conferenceYear": row["conference_year"],
+                     "embedding": embedding
+                 })
+        
+        if not papers:
+            return jsonify({"error": "No valid papers found"}), 404
+
+        client = init_genai_client()
+        result = categorize_papers(client, categorize_info_data, papers)
+        
+        # Clean result (remove embeddings)
+        cleaned_result = {}
+        for key, value in result.items():
+            if key == "info":
+                cleaned_result[key] = value
+                continue
+            
+            if isinstance(value, list):
+                cleaned_result[key] = []
+                for p in value:
+                     p_copy = p.copy()
+                     p_copy.pop("embedding", None)
+                     cleaned_result[key].append(p_copy)
+            else:
+                cleaned_result[key] = value
+
+        return jsonify(cleaned_result)
+
+    except Exception as e:
+        log_structured("ERROR", "Error in run_categorization", request_id=request_id, error=str(e))
+        return jsonify({"error": "Internal Server Error"}), 500
+    finally:
+        if conn:
+            conn.close()
     port = int(os.environ.get("PORT", 8080))
     log_structured(
         "INFO", 

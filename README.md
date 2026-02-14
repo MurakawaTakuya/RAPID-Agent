@@ -1,73 +1,31 @@
-# RAPID Agent - Retrieve Academic Papers Into Devisions
+# RAPID Agent
 
-## プロジェクト作成
-### React + TypeScript
-```bash
-npm create vite@latest my-react-app --template react
-```
+RAPID Agent (Retrieve Academic Papers Into Divisions) は、研究者が効率的に学術論文を発見・整理するための AI 搭載ツールです。
 
-### Next.js + TypeScript
-```bash
-npx create-next-app@latest --ts
-```
+## サービス概要
 
-## ESLint
-```bash
-npm install --save-dev eslint-plugin-react
-```
-`.eslintrc.json`, `.eslintignore`を追加
+RAPID Agent は、ベクトルベースの意味論的検索（セマンティックサーチ）と LLM による整理機能を組み合わせることで、文献レビューのプロセスを効率化します。
 
-## Prettier
-```bash
-npm install --save-dev prettier eslint-config-prettier eslint-plugin-prettier
-```
-`.prettierrc`, `.prettierignore`を追加
+### 主な機能
 
-## Scss
-```bash
-npm install --save-dev sass
-```
-ファイル名を`.css`から`.scss`に変更
+- **セマンティック検索**: 自然言語クエリとベクトル埋め込みを使用して、トップカンファレンス（CVPR, ICCV, ECCV など）から関連する論文を検索できます。
+- **スマートフィルタリング**: 特定の会議や年で結果をフィルタリングし、最も関連性の高い研究に焦点を当てることができます。
+- **LLM による自動分類**: AIを使用して、検索結果をカスタムカテゴリに自動的にグループ化・整理します。「手法別に」「応用分野別に」など、グループ化の基準を指示するだけで、エージェントが残りの作業を行います。
+- **インタラクティブなインターフェース**: 検索から整理された洞察を得るまで、ステップバイステップでガイドするクリーンな Web インターフェースを提供します。
 
-## Stylelint
-```bash
-npm install --save-dev stylelint stylelint-config-standard stylelint-scss stylelint-config-recess-order
-```
-`.stylelintrc.json`を追加
-- scssファイルのlint
-- cssのプロパティの順番を自動で整列
+## サービスの流れ (Service Flow)
 
-## Package.json
-以下はNext.jsの場合
-```json
-  "scripts": {
-    "dev": "npm i && next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write ."
-  },
+1.  **検索 (Search)**
+    *   キーワードとフィルタ条件（会議名、年）を入力して，embeddingを使用して関連論文を検索します。また、類似度のしきい値を設定して検索精度を調整できます。
+2.  **グループ化設定 (Grouping Setup)**
+    *   検索結果をどのように分類したいかを自然言語で指示します（例：「手法別に」「応用分野別に」）。AIが最適な分類カテゴリを提案します。
+3.  **分類結果 (Results)**
+    *   提案されたカテゴリに基づいて、embeddingを使用して論文が自動的に振り分けられます。各グループごとに論文を確認し、効率的に文献レビューを進めることができます。
 
-```
-`dev`に`npn i`を入れておくと、package関連に変更がある時でも気にせずに使用できる
 
-## VSCode
-`.vscode/settings.json`, `.vscode/extensions.json`を追加
-- セーブ時に自動でフォーマットするように設定
-- おすすめの拡張機能を追加(拡張機能タブで`@recommended`で検索)
-- importの並び替えと自動追加・削除
+## 技術スタック
 
-## GitHub
-`.github\PULL_REQUEST_TEMPLATE.md`を追加
-
-## Next.jsで静的エクスポートを使用する場合
-`next.config.ts`に以下を追加
-```ts
-module.exports = {
-  output: "export",
-  trailingSlash: true,
-}
-```
-```bash
-npm run build
-```
+- **Frontend**: Next.js, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Python (Flask), Google Cloud Run
+- **AI/ML**: Vertex AI (categorization, embeddings), PostgreSQL (pgvector)
+- **Infrastructure**: Google Cloud (Cloud Run, Vertex AI, Cloud Build, Identity Platform, Cloud Logging, etc.), Neon DB

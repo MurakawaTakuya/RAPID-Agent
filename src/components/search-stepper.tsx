@@ -14,7 +14,7 @@ import {
   FileTextIcon,
   LoaderCircleIcon,
   SearchIcon,
-  SendIcon,
+  Sparkles,
 } from "lucide-react";
 
 interface SearchStepperProps {
@@ -28,11 +28,11 @@ const steps = [
   },
   {
     title: "グループ化",
-    icon: <FileTextIcon className="size-4" />,
+    icon: <Sparkles className="size-4" />,
   },
   {
-    title: "Hoge",
-    icon: <SendIcon className="size-4" />,
+    title: "結果",
+    icon: <FileTextIcon className="size-4" />,
   },
 ];
 

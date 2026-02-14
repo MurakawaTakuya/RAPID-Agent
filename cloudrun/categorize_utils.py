@@ -6,6 +6,9 @@ import re
 import numpy as np
 
 
+
+
+
 BATCH_SIZE = 250
 
 
@@ -63,7 +66,7 @@ def _fetch_similar_papers(
     return [paper for paper, _ in similar_papers]
 
 
-def _extract_json(text: str) -> dict:
+def extract_json_from_response(text: str) -> dict:
     # Remove markdown code blocks if present
     text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
@@ -82,7 +85,7 @@ def _extract_json(text: str) -> dict:
     raise ValueError("Failed to parse JSON from model response.")
 
 
-def generate_categorize_info(
+def llm_suggest_categorization(
     client: genai.Client, user_input: str
 ) -> dict:
     """
@@ -101,7 +104,7 @@ def generate_categorize_info(
     }
     """
 
-    prompt = """
+    system_instruction = """
     コンピュータビジョン分野の論文のカテゴリ分けの準備をします．
     [ユーザー入力]に適した[分類軸テーマ]とそれに準ずる[カテゴリ]集合を以下の例に従って出力してください．
     注意点："content"は簡潔に,検索に使われるキーワードやフレーズを中心に記述してください．
@@ -134,7 +137,7 @@ def generate_categorize_info(
         ]
     }
     """
-    prompt += f'\n[ユーザー入力]： """{user_input}"""\n出力：\n'
+    user_message = f'[ユーザー入力]： """{user_input}"""\n出力：\n'
 
     tools = [
         types.Tool(google_search=types.GoogleSearch()),
@@ -143,24 +146,25 @@ def generate_categorize_info(
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt,
+        contents=user_message,
         config=GenerateContentConfig(
             response_modalities=["TEXT"],
+            system_instruction=system_instruction,
             tools=tools,
         ),
     )
     text = response.text
-    categorize_info = _extract_json(text)
+    suggestions = extract_json_from_response(text)
 
-    for category in categorize_info["categories"]:
+    for category in suggestions["categories"]:
         category["content"] = category["content"].replace("\n", " ").strip()
 
-    return categorize_info
+    return suggestions
 
 
 def categorize_papers(
     client: genai.Client,
-    categorize_info: dict,
+    suggestions: dict,
     papers: list[dict],
     threshold: float = 0.65
 ):
@@ -205,13 +209,13 @@ def categorize_papers(
     for paper in original_papers:
         paper["categories"] = []  # カテゴリリストを初期化. 再利用時のため.
 
-    queries = [f"{category['title']}: {category['content']}" for category in categorize_info["categories"]]
+    queries = [f"{category['title']}: {category['content']}" for category in suggestions["categories"]]
     query_embeddings = _generate_query_embeddings(client, queries)
 
     result = {
-        "info": categorize_info,
+        "info": suggestions,
     }
-    for q_emb, category in zip(query_embeddings, categorize_info["categories"]):
+    for q_emb, category in zip(query_embeddings, suggestions["categories"]):
         category_title = category["title"]
         similar_papers = _fetch_similar_papers(
             original_papers,

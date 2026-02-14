@@ -1,26 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Paper } from "@/lib/types";
 import { useState } from "react";
-
-export interface Paper {
-  id: number;
-  title: string;
-  url: string;
-  abstract: string | null;
-  conferenceName: string | null;
-  conferenceYear: number | null;
-  cosineSimilarity: number | null;
-}
 
 interface PapersTableProps {
   papers: Paper[];
   selectedPapers: Set<number>;
   message: string;
-  onToggleSelectAll: () => void;
-  onTogglePaperSelection: (paperId: number) => void;
-  onDeletePaper: (paperId: number) => void;
-  onDeleteSelected: () => void;
+  onToggleSelectAll?: () => void;
+  onTogglePaperSelection?: (paperId: number) => void;
+  onDeletePaper?: (paperId: number) => void;
+  onDeleteSelected?: () => void;
+  readOnly?: boolean;
+  showSimilarity?: boolean;
 }
 
 export function PapersTable({
@@ -31,6 +24,8 @@ export function PapersTable({
   onTogglePaperSelection,
   onDeletePaper,
   onDeleteSelected,
+  readOnly = false,
+  showSimilarity = true,
 }: PapersTableProps) {
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(
     new Set()
@@ -55,7 +50,7 @@ export function PapersTable({
     <div className="max-w-7xl w-full space-y-3">
       <div className="flex items-center justify-between">
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>
-        {selectedPapers.size > 0 && (
+        {!readOnly && selectedPapers.size > 0 && onDeleteSelected && (
           <Button variant="destructive" size="sm" onClick={onDeleteSelected}>
             選択した{selectedPapers.size}件を削除
           </Button>
@@ -67,16 +62,18 @@ export function PapersTable({
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr className="border-b">
-                <th className="w-12 px-4 py-3 align-middle">
-                  <div className="flex items-center justify-center h-full">
-                    <input
-                      type="checkbox"
-                      checked={isAllSelected}
-                      onChange={onToggleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                    />
-                  </div>
-                </th>
+                {!readOnly && onToggleSelectAll && (
+                  <th className="w-12 px-4 py-3 align-middle">
+                    <div className="flex items-center justify-center h-full">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={onToggleSelectAll}
+                        className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                      />
+                    </div>
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
                   Title
                 </th>
@@ -86,12 +83,16 @@ export function PapersTable({
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
                   Abstract
                 </th>
-                <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
-                  Similarity
-                </th>
-                <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
-                  Delete
-                </th>
+                {showSimilarity && (
+                  <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
+                    Similarity
+                  </th>
+                )}
+                {!readOnly && onDeletePaper && (
+                  <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
+                    Delete
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -99,17 +100,21 @@ export function PapersTable({
                 <tr
                   key={paper.id}
                   className={`hover:bg-accent/50 transition-colors ${
-                    selectedPapers.has(paper.id) ? "bg-accent/30" : ""
+                    !readOnly && selectedPapers.has(paper.id)
+                      ? "bg-accent/30"
+                      : ""
                   }`}
                 >
-                  <td className="px-4 py-4 align-middle">
-                    <input
-                      type="checkbox"
-                      checked={selectedPapers.has(paper.id)}
-                      onChange={() => onTogglePaperSelection(paper.id)}
-                      className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                    />
-                  </td>
+                  {!readOnly && onTogglePaperSelection && (
+                    <td className="px-4 py-4 align-middle">
+                      <input
+                        type="checkbox"
+                        checked={selectedPapers.has(paper.id)}
+                        onChange={() => onTogglePaperSelection(paper.id)}
+                        className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-4">
                     <a
                       href={paper.url.startsWith("http") ? paper.url : "#"}
@@ -145,40 +150,45 @@ export function PapersTable({
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-center">
-                    {paper.cosineSimilarity !== null &&
-                      paper.cosineSimilarity !== undefined && (
-                        <span className="text-sm text-muted-foreground">
-                          {paper.cosineSimilarity.toFixed(3)}
-                        </span>
-                      )}
-                  </td>
-                  <td className="pl-1 pr-4 py-4 text-center">
-                    <button
-                      onClick={() => onDeletePaper(paper.id)}
-                      className="inline-flex items-center justify-center p-2 hover:bg-destructive/10 rounded-md transition-colors group"
-                      title="削除"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-muted-foreground group-hover:text-destructive"
+
+                  {showSimilarity && (
+                    <td className="px-4 py-4 text-center">
+                      {paper.cosineSimilarity !== null &&
+                        paper.cosineSimilarity !== undefined && (
+                          <span className="text-sm text-muted-foreground">
+                            {paper.cosineSimilarity.toFixed(3)}
+                          </span>
+                        )}
+                    </td>
+                  )}
+                  {!readOnly && onDeletePaper && (
+                    <td className="pl-1 pr-4 py-4 text-center">
+                      <button
+                        onClick={() => onDeletePaper(paper.id)}
+                        className="inline-flex items-center justify-center p-2 hover:bg-destructive/10 rounded-md transition-colors group"
+                        title="削除"
                       >
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
-                  </td>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-muted-foreground group-hover:text-destructive"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

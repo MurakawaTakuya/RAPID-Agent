@@ -1,11 +1,16 @@
 "use client";
+import { CategorizationResults } from "@/components/categorization-results";
+import { CategorizationStep } from "@/components/categorization-step";
 import { InputInline, SearchResult } from "@/components/input-inline";
 import { Introduction } from "@/components/introduction";
 import { SearchStepper } from "@/components/search-stepper";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { CategorizationInfo, CategorizedPaper } from "@/lib/types";
+import { parseErrorResponse } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -13,7 +18,21 @@ import { useState } from "react";
 export default function Home() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [direction, setDirection] = useState(0);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+
+  // Categorization state
+  const [categorizationInput, setCategorizationInput] = useState("");
+  const [categorizationInfo, setCategorizationInfo] =
+    useState<CategorizationInfo | null>(null);
+  const [groupedPapers, setGroupedPapers] = useState<Record<
+    string,
+    CategorizedPaper[]
+  > | null>(null);
+  const [isCategorizing, setIsCategorizing] = useState(false);
+  const [categorizationError, setCategorizationError] = useState<string | null>(
+    null
+  );
 
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
@@ -34,14 +53,81 @@ export default function Home() {
       searchResult?.papers &&
       searchResult.papers.length > 0
     ) {
+      setDirection(1);
       setCurrentStep(2);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
+      setDirection(-1);
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleCategorizationComplete = (
+    result: Record<string, CategorizedPaper[]>,
+    info: CategorizationInfo
+  ) => {
+    setGroupedPapers(result);
+    setCategorizationInfo(info);
+    setDirection(1);
+    setCurrentStep(3);
+  };
+
+  const handleRunCategorization = async () => {
+    if (!user || !categorizationInfo) return;
+
+    setIsCategorizing(true);
+    setCategorizationError(null);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/cloud-run/categorize/run", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          info: categorizationInfo,
+          paper_ids: (searchResult?.papers || []).map((p) => p.id),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await parseErrorResponse(
+          response,
+          "Failed to categorize papers"
+        );
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      handleCategorizationComplete(data, categorizationInfo);
+    } catch (err) {
+      if (err instanceof Error) {
+        setCategorizationError(err.message);
+      } else {
+        setCategorizationError("An unknown error occurred");
+      }
+    } finally {
+      setIsCategorizing(false);
+    }
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction >= 0 ? 100 : -100,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 100 : -100,
+      opacity: 0,
+    }),
   };
 
   return (
@@ -75,7 +161,7 @@ export default function Home() {
                   className="gap-1"
                 >
                   <ChevronLeft className="size-4" />
-                  検索し直す
+                  戻る
                 </Button>
               </motion.div>
             )}
@@ -98,22 +184,51 @@ export default function Home() {
                   </Button>
                 </motion.div>
               )}
+            {currentStep === 2 && categorizationInfo && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <Button
+                  onClick={handleRunCategorization}
+                  disabled={isCategorizing}
+                  className="gap-1"
+                >
+                  {isCategorizing ? (
+                    <Spinner className="mr-2" />
+                  ) : (
+                    <>
+                      この分類でグループ化する
+                      <ChevronRight className="size-4" />
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={direction}>
           {currentStep === 1 && (
             <motion.main
               key="step1"
-              initial={{ opacity: 0, x: -100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
-              <h2 className="text-2xl font-bold mt-3">
-                興味のある論文を検索しましょう
-              </h2>
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl font-bold mt-13">
+                  興味のある論文を検索しましょう
+                </h2>
+                <p className="text-muted-foreground">
+                  キーワードや会議名で論文を絞り込みます
+                </p>
+              </div>
               <InputInline
                 result={searchResult}
                 onResultChange={setSearchResult}
@@ -130,22 +245,39 @@ export default function Home() {
           {currentStep === 2 && (
             <motion.main
               key="step2"
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
+              className="w-full flex justify-center"
             >
-              <h2 className="text-2xl font-bold">Search Selection Confirmed</h2>
-              <div className="p-8 border rounded-lg bg-card w-full max-w-3xl">
-                <p>Selected {searchResult?.papers.length} papers.</p>
-                {/* Placeholder for Next Step content */}
-                <div className="mt-4">
-                  <p className="text-muted-foreground">
-                    Next screen content goes here...
-                  </p>
-                </div>
-              </div>
+              <CategorizationStep
+                inputValue={categorizationInput}
+                onInputChange={setCategorizationInput}
+                categorizationInfo={categorizationInfo}
+                onCategorizationInfoChange={setCategorizationInfo}
+                externalError={categorizationError}
+              />
+            </motion.main>
+          )}
+
+          {currentStep === 3 && groupedPapers && categorizationInfo && (
+            <motion.main
+              key="step3"
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="w-full flex justify-center"
+            >
+              <CategorizationResults
+                groupedPapers={groupedPapers}
+                categories={categorizationInfo.categories}
+              />
             </motion.main>
           )}
         </AnimatePresence>
