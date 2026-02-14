@@ -1,16 +1,18 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Bot,
-  ChevronsUpDown,
-  History,
-  LogOut,
-  LucideIcon,
-  Settings2,
-  SquareTerminal,
-  Star,
-} from "lucide-react";
+// TODO: サイドバーを更新
+// import {
+//   Bot,
+//   ChevronsUpDown,
+//   History,
+//   LogOut,
+//   LucideIcon,
+//   Settings2,
+//   SquareTerminal,
+//   Star,
+// } from "lucide-react";
+import { ChevronsUpDown, LogOut, LucideIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -53,71 +55,71 @@ interface NavItem {
 
 const data: { navMain: NavItem[] } = {
   navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-          icon: History,
-        },
-        {
-          title: "Starred",
-          url: "#",
-          icon: Star,
-        },
-        {
-          title: "Settings",
-          url: "#",
-          icon: Settings2,
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
+    // {
+    //   title: "Playground",
+    //   url: "#",
+    //   icon: SquareTerminal,
+    //   isActive: true,
+    //   items: [
+    //     {
+    //       title: "History",
+    //       url: "#",
+    //       icon: History,
+    //     },
+    //     {
+    //       title: "Starred",
+    //       url: "#",
+    //       icon: Star,
+    //     },
+    //     {
+    //       title: "Settings",
+    //       url: "#",
+    //       icon: Settings2,
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "Models",
+    //   url: "#",
+    //   icon: Bot,
+    //   items: [
+    //     {
+    //       title: "Genesis",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Explorer",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Quantum",
+    //       url: "#",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "Settings",
+    //   url: "#",
+    //   icon: Settings2,
+    //   items: [
+    //     {
+    //       title: "General",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Team",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Billing",
+    //       url: "#",
+    //     },
+    //     {
+    //       title: "Limits",
+    //       url: "#",
+    //     },
+    //   ],
+    // },
   ],
 };
 
