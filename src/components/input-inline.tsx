@@ -32,16 +32,29 @@ interface ConferenceGroup {
 export interface InputInlineProps {
   result: SearchResult | null;
   onResultChange: (result: SearchResult | null) => void;
+  // Search state
+  selectedConferences: string[];
+  onConferencesChange: (value: string[]) => void;
+  keyword: string;
+  onKeywordChange: (value: string) => void;
+  threshold: number[];
+  onThresholdChange: (value: number[]) => void;
 }
 
-export function InputInline({ result, onResultChange }: InputInlineProps) {
+export function InputInline({
+  result,
+  onResultChange,
+  selectedConferences,
+  onConferencesChange,
+  keyword,
+  onKeywordChange,
+  threshold,
+  onThresholdChange,
+}: InputInlineProps) {
   const [conferenceOptions, setConferenceOptions] = useState<ConferenceGroup[]>(
     []
   );
   const [conferencesLoading, setConferencesLoading] = useState(true);
-  const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
-  const [keyword, setKeyword] = useState("");
-  const [threshold, setThreshold] = useState([0.65]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedPapers, setSelectedPapers] = useState<Set<number>>(new Set());
@@ -217,8 +230,8 @@ export function InputInline({ result, onResultChange }: InputInlineProps) {
               ? "学会データを読み込み中..."
               : "学会と年を選択..."
           }
-          onValueChange={setSelectedConferences}
-          value={selectedConferences}
+          onValueChange={onConferencesChange}
+          defaultValue={selectedConferences}
           disabled={conferencesLoading}
           responsive={{
             mobile: { maxCount: 5 },
@@ -237,7 +250,7 @@ export function InputInline({ result, onResultChange }: InputInlineProps) {
           placeholder="例: Diffusion, 3DGS, 静的バイアス関連"
           className="h-12 text-lg"
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
+          onChange={(e) => onKeywordChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && keyword.trim()) handleSearch();
           }}
@@ -258,7 +271,7 @@ export function InputInline({ result, onResultChange }: InputInlineProps) {
             onChange={(e) => {
               const val = parseFloat(e.target.value);
               if (!isNaN(val) && val >= 0 && val <= 1) {
-                setThreshold([val]);
+                onThresholdChange([val]);
               }
             }}
             className="w-20 h-8 text-right"
@@ -266,7 +279,7 @@ export function InputInline({ result, onResultChange }: InputInlineProps) {
         </div>
         <Slider
           value={threshold}
-          onValueChange={setThreshold}
+          onValueChange={onThresholdChange}
           min={0}
           max={1}
           step={0.01}

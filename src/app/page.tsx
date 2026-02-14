@@ -15,6 +15,11 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
 
+  // Search state
+  const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
+  const [keyword, setKeyword] = useState<string>("");
+  const [threshold, setThreshold] = useState<number[]>([0.65]);
+
   if (loading) {
     return null; // Or a loading spinner
   }
@@ -112,6 +117,12 @@ export default function Home() {
               <InputInline
                 result={searchResult}
                 onResultChange={setSearchResult}
+                selectedConferences={selectedConferences}
+                onConferencesChange={setSelectedConferences}
+                keyword={keyword}
+                onKeywordChange={setKeyword}
+                threshold={threshold}
+                onThresholdChange={setThreshold}
               />
             </motion.main>
           )}
