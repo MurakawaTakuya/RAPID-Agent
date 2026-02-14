@@ -20,7 +20,7 @@ export function Introduction() {
           lineDistance={8}
           lineCount={12}
           interactive={false}
-          animationSpeed={4}
+          animationSpeed={3}
         />
       </div>
 
