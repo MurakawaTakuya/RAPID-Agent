@@ -21,6 +21,7 @@
   },
   "registries": {
     "@react-bits": "https://reactbits.dev/r/{name}.json",
-    "@magicui": "https://magicui.design/r/{name}"
+    "@magicui": "https://magicui.design/r/{name}",
+    "@reui": "https://reui.io/r/{style}/{name}.json"
   }
 }
