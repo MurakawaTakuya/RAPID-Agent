@@ -23,6 +23,7 @@ export default function Home() {
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
 
   // Categorization state
+  const [categorizationInput, setCategorizationInput] = useState("");
   const [categorizationInfo, setCategorizationInfo] =
     useState<CategorizationInfo | null>(null);
   const [groupedPapers, setGroupedPapers] = useState<Record<
@@ -185,6 +186,10 @@ export default function Home() {
               <CategorizationStep
                 papers={searchResult?.papers || []}
                 onCategorizationComplete={handleCategorizationComplete}
+                inputValue={categorizationInput}
+                onInputChange={setCategorizationInput}
+                categorizationInfo={categorizationInfo}
+                onCategorizationInfoChange={setCategorizationInfo}
               />
             </motion.main>
           )}

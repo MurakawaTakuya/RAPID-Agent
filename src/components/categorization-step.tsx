@@ -24,25 +24,30 @@ interface CategorizationStepProps {
     result: Record<string, Paper[]>,
     info: CategorizationInfo
   ) => void;
+  inputValue: string;
+  onInputChange: (value: string) => void;
+  categorizationInfo: CategorizationInfo | null;
+  onCategorizationInfoChange: (info: CategorizationInfo | null) => void;
 }
 
 export function CategorizationStep({
   papers,
   onCategorizationComplete,
+  inputValue,
+  onInputChange,
+  categorizationInfo,
+  onCategorizationInfoChange,
 }: CategorizationStepProps) {
   const { user } = useAuth();
-  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [categorizationInfo, setCategorizationInfo] =
-    useState<CategorizationInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerateInfo = async () => {
-    if (!user || !input.trim()) return;
+    if (!user || !inputValue.trim()) return;
 
     setLoading(true);
     setError(null);
-    setCategorizationInfo(null);
+    onCategorizationInfoChange(null);
 
     try {
       const token = await user.getIdToken();
@@ -52,7 +57,7 @@ export function CategorizationStep({
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ input: input }),
+        body: JSON.stringify({ input: inputValue }),
       });
 
       if (!response.ok) {
@@ -61,7 +66,7 @@ export function CategorizationStep({
       }
 
       const data = await response.json();
-      setCategorizationInfo(data);
+      onCategorizationInfoChange(data);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -128,14 +133,14 @@ export function CategorizationStep({
         </label>
         <div className="flex gap-2 items-start">
           <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
             placeholder="例: 手法（Diffusion, GAN, VAE...）で分類して。あるいは、応用分野（医療、自動運転...）で。"
             className="flex-1 min-h-[100px] text-base"
           />
           <Button
             onClick={handleGenerateInfo}
-            disabled={loading || !input.trim()}
+            disabled={loading || !inputValue.trim()}
             className="h-[100px] px-6 flex flex-col gap-2"
           >
             {loading && !categorizationInfo ? (
