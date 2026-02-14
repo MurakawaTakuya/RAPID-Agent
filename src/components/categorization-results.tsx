@@ -44,6 +44,7 @@ export function CategorizationResults({
               onDeletePaper={() => {}}
               onDeleteSelected={() => {}}
               readOnly={true}
+              showSimilarity={false}
             />
           </div>
         );
@@ -67,6 +68,7 @@ export function CategorizationResults({
             onDeletePaper={() => {}}
             onDeleteSelected={() => {}}
             readOnly={true}
+            showSimilarity={false}
           />
         </div>
       )}

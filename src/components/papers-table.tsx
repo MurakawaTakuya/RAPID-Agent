@@ -22,6 +22,7 @@ interface PapersTableProps {
   onDeletePaper: (paperId: number) => void;
   onDeleteSelected: () => void;
   readOnly?: boolean;
+  showSimilarity?: boolean;
 }
 
 export function PapersTable({
@@ -33,6 +34,7 @@ export function PapersTable({
   onDeletePaper,
   onDeleteSelected,
   readOnly = false,
+  showSimilarity = true,
 }: PapersTableProps) {
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(
     new Set()
@@ -90,9 +92,11 @@ export function PapersTable({
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
                   Abstract
                 </th>
-                <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
-                  Similarity
-                </th>
+                {showSimilarity && (
+                  <th className="px-4 py-3 text-center text-md font-medium text-muted-foreground w-20">
+                    Similarity
+                  </th>
+                )}
                 {!readOnly && (
                   <th className="pl-1 pr-4 py-3 text-center text-md font-medium text-muted-foreground w-14">
                     Delete
@@ -155,14 +159,17 @@ export function PapersTable({
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-center">
-                    {paper.cosineSimilarity !== null &&
-                      paper.cosineSimilarity !== undefined && (
-                        <span className="text-sm text-muted-foreground">
-                          {paper.cosineSimilarity.toFixed(3)}
-                        </span>
-                      )}
-                  </td>
+
+                  {showSimilarity && (
+                    <td className="px-4 py-4 text-center">
+                      {paper.cosineSimilarity !== null &&
+                        paper.cosineSimilarity !== undefined && (
+                          <span className="text-sm text-muted-foreground">
+                            {paper.cosineSimilarity.toFixed(3)}
+                          </span>
+                        )}
+                    </td>
+                  )}
                   {!readOnly && (
                     <td className="pl-1 pr-4 py-4 text-center">
                       <button
