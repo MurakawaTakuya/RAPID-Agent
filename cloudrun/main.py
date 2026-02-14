@@ -297,17 +297,17 @@ def suggest_categorization():
     
     data = request.get_json(silent=True) or {}
     user_input = data.get("input", "")
-    paper_titles = data.get("paper_titles", [])
+    papers = data.get("papers", [])
     
     if not user_input:
         return jsonify({"error": "Input is required"}), 400
 
     request_id = str(uuid.uuid4())[:8]
-    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input), titles_count=len(paper_titles))
+    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input), papers_count=len(papers))
 
     try:
         client = init_genai_client()
-        suggestions = llm_suggest_categorization(client, user_input, paper_titles)
+        suggestions = llm_suggest_categorization(client, user_input, papers)
         return jsonify(suggestions)
     except Exception as e:
         log_structured("ERROR", "Error in suggest_categorization", request_id=request_id, error=str(e))

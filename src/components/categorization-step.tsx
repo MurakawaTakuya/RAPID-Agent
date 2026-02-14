@@ -44,8 +44,11 @@ export function CategorizationStep({
     setIsEditing(false);
     setEditedInfo(null);
 
-    // Extract paper titles (limit to top 50 by similarity)
-    const paperTitles = papers.slice(0, 50).map((p) => p.title);
+    // Extract papers (limit to top 20 by similarity)
+    const topPapers = papers.slice(0, 20).map((p) => ({
+      title: p.title,
+      abstract: p.abstract,
+    }));
 
     try {
       const token = await user.getIdToken();
@@ -57,7 +60,7 @@ export function CategorizationStep({
         },
         body: JSON.stringify({
           input: inputToUse,
-          paper_titles: paperTitles,
+          papers: topPapers,
         }),
       });
 
@@ -83,12 +86,12 @@ export function CategorizationStep({
   };
 
   const SAMPLE_PROMPTS = [
-    "手法で分類",
-    "タスクで分類",
-    "モデルアーキテクチャで分類",
-    "問題設定・研究目標で分類",
-    "応用分野で分類",
-    "いい感じに分類",
+    "手法で分類して",
+    "タスクで分類して",
+    "モデルアーキテクチャで分類して",
+    "問題設定・研究目標で分類して",
+    "応用分野で分類して",
+    "いい感じに分類して",
   ];
 
   const startEditing = () => {
@@ -149,14 +152,11 @@ export function CategorizationStep({
 
       {/* Step 1: Input & Generate Categories */}
       <div className="w-full max-w-3xl space-y-4">
-        <label className="text-sm font-medium">
-          どのように論文を分類したいですか？
-        </label>
-        <div className="flex gap-2 items-start">
+        <div className="flex gap-2 items-start mb-1">
           <Textarea
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
-            placeholder="例: 手法（Diffusion, GAN, VAE...）で分類して。あるいは、応用分野（医療、自動運転...）で。"
+            placeholder="例: 手法（Diffusion, GAN, VAE, ...）で分類して。あるいは、タスク（T2V, I2V, ...）で分類して。"
             className="flex-1 min-h-[100px] text-base"
             onKeyDown={(e) => {
               if (
@@ -184,6 +184,11 @@ export function CategorizationStep({
               </>
             )}
           </Button>
+        </div>
+        <div>
+          <label className="text-sm font-medium">
+            AIがあなたの要望に最適な分類方法を提案します。AIは類似度上位20件の論文のタイトルと概要も参考にします。
+          </label>
         </div>
 
         {/* Sample Prompts */}
