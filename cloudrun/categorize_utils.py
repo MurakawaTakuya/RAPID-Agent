@@ -66,7 +66,7 @@ def _fetch_similar_papers(
     return [paper for paper, _ in similar_papers]
 
 
-def _extract_json(text: str) -> dict:
+def extract_json_from_response(text: str) -> dict:
     # Remove markdown code blocks if present
     text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
@@ -153,7 +153,7 @@ def suggest_categorization(
         ),
     )
     text = response.text
-    suggestions = _extract_json(text)
+    suggestions = extract_json_from_response(text)
 
     for category in suggestions["categories"]:
         category["content"] = category["content"].replace("\n", " ").strip()

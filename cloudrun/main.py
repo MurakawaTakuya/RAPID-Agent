@@ -63,24 +63,7 @@ SEARCH_SYSTEM_INSTRUCTION = """
 """
 
 
-def extract_json_from_response(text: str) -> dict | None:
-    """Extract JSON from LLM response, handling potential markdown formatting"""
-    # Remove markdown code blocks if present
-    text = re.sub(r'^```json?\s*', '', text, flags=re.MULTILINE)
-    text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
-    text = text.strip()
-    
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Try to find JSON object in the text
-        match = re.search(r'\{.*\}', text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group())
-            except json.JSONDecodeError:
-                return None
-    return None
+
 
 
 def init_genai_client():
