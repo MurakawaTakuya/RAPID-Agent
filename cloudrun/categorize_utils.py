@@ -86,7 +86,7 @@ def extract_json_from_response(text: str) -> dict:
 
 
 def llm_suggest_categorization(
-    client: genai.Client, user_input: str
+    client: genai.Client, user_input: str, paper_titles: list[str] = []
 ) -> dict:
     """
     Output example:
@@ -108,6 +108,7 @@ def llm_suggest_categorization(
     コンピュータビジョン分野の論文のカテゴリ分けの準備をします．
     [ユーザー入力]に適した[分類軸テーマ]とそれに準ずる[カテゴリ]集合を以下の例に従って出力してください．
     注意点："content"は簡潔に,検索に使われるキーワードやフレーズを中心に記述してください．
+    必要であれば[検索された論文タイトルリスト]も参考にして、それらをうまく分類できるような軸を提案してください。
     
     [例]
     [ユーザー入力]: 学習設定に関する分類．教師ありとか．
@@ -137,7 +138,9 @@ def llm_suggest_categorization(
         ]
     }
     """
-    user_message = f'[ユーザー入力]： """{user_input}"""\n出力：\n'
+    
+    titles_text = "\n".join([f"- {t}" for t in paper_titles])
+    user_message = f'[ユーザー入力]： """{user_input}"""\n\n[検索された論文タイトルリスト]:\n{titles_text}\n\n出力：\n'
 
     tools = [
         types.Tool(google_search=types.GoogleSearch()),

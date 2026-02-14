@@ -259,6 +259,7 @@ export default function Home() {
                 categorizationInfo={categorizationInfo}
                 onCategorizationInfoChange={setCategorizationInfo}
                 externalError={categorizationError}
+                papers={searchResult?.papers || []}
               />
             </motion.main>
           )}

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { CategorizationInfo } from "@/lib/types";
+import { CategorizationInfo, Paper } from "@/lib/types";
 import { parseErrorResponse } from "@/lib/utils";
 import { Check, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -16,6 +16,7 @@ interface CategorizationStepProps {
   categorizationInfo: CategorizationInfo | null;
   onCategorizationInfoChange: (info: CategorizationInfo | null) => void;
   externalError?: string | null;
+  papers: Paper[];
 }
 
 export function CategorizationStep({
@@ -24,6 +25,7 @@ export function CategorizationStep({
   categorizationInfo,
   onCategorizationInfoChange,
   externalError,
+  papers,
 }: CategorizationStepProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,9 @@ export function CategorizationStep({
     setIsEditing(false);
     setEditedInfo(null);
 
+    // Extract paper titles (limit to top 50 by similarity)
+    const paperTitles = papers.slice(0, 50).map((p) => p.title);
+
     try {
       const token = await user.getIdToken();
       const response = await fetch("/api/cloud-run/categorize/suggest", {
@@ -48,7 +53,10 @@ export function CategorizationStep({
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ input: inputValue }),
+        body: JSON.stringify({
+          input: inputValue,
+          paper_titles: paperTitles,
+        }),
       });
 
       if (!response.ok) {
