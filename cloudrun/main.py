@@ -13,7 +13,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from categorize_utils import llm_suggest_categorization, categorize_papers
 
-
+# Default similarity threshold for paper search
+DEFAULT_SIMILARITY_THRESHOLD = 0.66
 
 
 
@@ -150,13 +151,13 @@ def search():
                 year = int(match.group(2))  # e.g., 2025
                 conference_filters.append((name_key, year))
 
-        # Get threshold from request, default to 0.65
+        # Get threshold from request, default to DEFAULT_SIMILARITY_THRESHOLD
         try:
-            similarity_threshold = float(data.get("threshold", 0.65))
+            similarity_threshold = float(data.get("threshold", DEFAULT_SIMILARITY_THRESHOLD))
             if not (0 <= similarity_threshold <= 1):
                 return jsonify({"error": "Invalid threshold: must be between 0 and 1"}), 400
         except (ValueError, TypeError):
-            similarity_threshold = 0.65
+            similarity_threshold = DEFAULT_SIMILARITY_THRESHOLD
 
         # Initialize Client (API Key or Vertex AI)
         client = init_genai_client()
@@ -254,8 +255,8 @@ def search():
                     "count": len(papers),
                     "threshold": similarity_threshold,
                     "message": (
-                        f"Found {len(papers)} papers "
-                        f"(cosine similarity ≥ {similarity_threshold})"
+                        f"{len(papers)}件の論文が見つかりました "
+                        f"(コサイン類似度 ≥ {similarity_threshold})"
                     ),
                 })
                 
@@ -297,16 +298,17 @@ def suggest_categorization():
     
     data = request.get_json(silent=True) or {}
     user_input = data.get("input", "")
+    papers = data.get("papers", [])
     
     if not user_input:
         return jsonify({"error": "Input is required"}), 400
 
     request_id = str(uuid.uuid4())[:8]
-    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input))
+    log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input), papers_count=len(papers))
 
     try:
         client = init_genai_client()
-        suggestions = llm_suggest_categorization(client, user_input)
+        suggestions = llm_suggest_categorization(client, user_input, papers)
         return jsonify(suggestions)
     except Exception as e:
         log_structured("ERROR", "Error in suggest_categorization", request_id=request_id, error=str(e))

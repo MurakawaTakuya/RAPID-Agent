@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -50,7 +50,7 @@
     "dotenv": "^17.2.4",
     "drizzle-kit": "^0.31.9",
     "eslint": "^9.19.0",
-    "eslint-config-next": "^15.1.6",
+    "eslint-config-next": "^16.1.6",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.3",

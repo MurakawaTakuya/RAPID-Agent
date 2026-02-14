@@ -15,6 +15,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+// Default similarity threshold for paper search (must match backend)
+const DEFAULT_SIMILARITY_THRESHOLD = 0.66;
+
 export default function Home() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
@@ -37,7 +40,9 @@ export default function Home() {
   // Search state
   const [selectedConferences, setSelectedConferences] = useState<string[]>([]);
   const [keyword, setKeyword] = useState<string>("");
-  const [threshold, setThreshold] = useState<number[]>([0.65]);
+  const [threshold, setThreshold] = useState<number[]>([
+    DEFAULT_SIMILARITY_THRESHOLD,
+  ]);
 
   if (loading) {
     return null; // Or a loading spinner
@@ -132,7 +137,7 @@ export default function Home() {
 
   return (
     <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
+      <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
         <div className="flex items-center gap-2 w-[120px]">
           <SidebarTrigger className="-ml-1" />
         </div>
@@ -179,7 +184,7 @@ export default function Home() {
                   exit={{ opacity: 0, x: 10 }}
                 >
                   <Button onClick={handleNext} className="gap-1">
-                    グループ化する
+                    分類方法を設定する
                     <ChevronRight className="size-4" />
                   </Button>
                 </motion.div>
@@ -199,7 +204,7 @@ export default function Home() {
                     <Spinner />
                   ) : (
                     <>
-                      この分類でグループ化する
+                      このグループで分類する
                       <ChevronRight className="size-4" />
                     </>
                   )}
@@ -222,7 +227,7 @@ export default function Home() {
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold mt-13">
+                <h2 className="text-2xl font-bold mt-3">
                   興味のある論文を検索しましょう
                 </h2>
                 <p className="text-muted-foreground">
@@ -259,6 +264,7 @@ export default function Home() {
                 categorizationInfo={categorizationInfo}
                 onCategorizationInfoChange={setCategorizationInfo}
                 externalError={categorizationError}
+                papers={searchResult?.papers || []}
               />
             </motion.main>
           )}

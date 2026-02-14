@@ -101,8 +101,11 @@ export function InputInline({
     fetchConferences();
   }, [user]);
 
-  const handleSearch = async () => {
+  const handleSearch = async (overrideKeyword?: string) => {
     if (!user) return;
+
+    const searchKeyword =
+      typeof overrideKeyword === "string" ? overrideKeyword : keyword;
 
     setError(null);
     onResultChange(null);
@@ -115,7 +118,7 @@ export function InputInline({
     }
 
     // Validation: Keyword is required
-    if (!keyword.trim()) {
+    if (!searchKeyword.trim()) {
       setError("検索キーワードを入力してください");
       return;
     }
@@ -137,7 +140,7 @@ export function InputInline({
         },
         body: JSON.stringify({
           conferences: selectedConferences,
-          keyword,
+          keyword: searchKeyword,
           threshold: threshold[0],
         }),
       });
@@ -220,7 +223,7 @@ export function InputInline({
   };
 
   return (
-    <div className="flex flex-col gap-6 items-center w-full">
+    <div className="flex flex-col gap-4 items-center w-full">
       {/* Conference Selection */}
       <div className="max-w-3xl w-full space-y-2">
         <label className="text-sm font-medium">学会を選択（複数選択可）</label>
@@ -249,15 +252,53 @@ export function InputInline({
         <label className="text-sm font-medium">検索キーワード</label>
         <Input
           type="search"
-          placeholder="例: Diffusion, 3DGS, 静的バイアス関連"
+          placeholder="例: Diffusion, 3DGS, Tracking, NeRF, LoRA, Static Bias, VLM, Multimodal"
           className="h-12 text-lg"
           value={keyword}
           onChange={(e) => onKeywordChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && keyword.trim()) handleSearch();
+            if (
+              e.key === "Enter" &&
+              !e.nativeEvent.isComposing &&
+              keyword.trim()
+            ) {
+              handleSearch();
+            }
           }}
           disabled={loading}
         />
+      </div>
+
+      {/* Sample Keywords */}
+      <div className="max-w-3xl w-full flex flex-wrap gap-2 pt-1">
+        {[
+          "Action Recognition",
+          "Object Detection",
+          "Segmentation",
+          "Diffusion",
+          "Pose Estimation",
+          "NeRF",
+          "LoRA",
+          "VLM",
+          "Multimodal",
+          "GAN",
+          "VAE",
+          "Inpainting",
+          "Gaussian Splatting",
+          "3D Reconstruction",
+        ].map((word) => (
+          <button
+            key={word}
+            onClick={() => {
+              onKeywordChange(word);
+              handleSearch(word);
+            }}
+            className="text-xs px-3 py-1.5 rounded-full border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-left cursor-pointer"
+            disabled={loading}
+          >
+            {word}
+          </button>
+        ))}
       </div>
 
       {/* Threshold Slider */}
@@ -293,7 +334,7 @@ export function InputInline({
       <Button
         size="lg"
         className="max-w-3xl w-full h-12"
-        onClick={handleSearch}
+        onClick={() => handleSearch()}
         disabled={
           loading ||
           !user ||
@@ -310,6 +351,10 @@ export function InputInline({
           "検索"
         )}
       </Button>
+
+      <div className="w-full text-center text-sm text-muted-foreground mt-auto">
+        最大500件まで検索できます
+      </div>
 
       {/* Error Display */}
       {error && (
@@ -334,14 +379,10 @@ export function InputInline({
       {result && result.papers && result.papers.length === 0 && (
         <div className="max-w-3xl w-full p-4 rounded-lg border bg-muted/50">
           <p className="text-sm text-muted-foreground">
-            結果が見つかりませんでした
+            結果が見つかりませんでした。キーワードを変更するか，類似度しきい値を下げてください．
           </p>
         </div>
       )}
-
-      <div className="w-full py-2 text-center text-sm text-muted-foreground mt-auto">
-        最大500件まで検索できます
-      </div>
     </div>
   );
 }
