@@ -11,7 +11,8 @@ from google.genai import types
 from google.genai.types import EmbedContentConfig
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from categorize_utils import suggest_categorization, categorize_papers
+from categorize_utils import llm_suggest_categorization, categorize_papers
+
 
 
 # Configure logging for Cloud Run
@@ -310,7 +311,7 @@ def suggest_categorization():
 
     try:
         client = init_genai_client()
-        suggestions = suggest_categorization(client, user_input)
+        suggestions = llm_suggest_categorization(client, user_input)
         return jsonify(suggestions)
     except Exception as e:
         log_structured("ERROR", "Error in suggest_categorization", request_id=request_id, error=str(e))
