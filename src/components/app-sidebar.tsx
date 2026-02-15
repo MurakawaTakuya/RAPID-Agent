@@ -1,17 +1,6 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-// TODO: サイドバーを更新
-// import {
-//   Bot,
-//   ChevronsUpDown,
-//   History,
-//   LogOut,
-//   LucideIcon,
-//   Settings2,
-//   SquareTerminal,
-//   Star,
-// } from "lucide-react";
 import {
   ChevronsUpDown,
   Folder,
@@ -19,6 +8,7 @@ import {
   LucideIcon,
   Search,
   Star,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,17 +46,19 @@ interface NavItem {
   url: string;
   icon?: LucideIcon;
   isActive?: boolean;
+  folderId?: number; // フォルダ削除用
   items?: {
     title: string;
     url: string;
     icon?: LucideIcon;
+    folderId?: number;
   }[];
 }
 
 export function AppSidebar() {
   const { user, signOut, loading } = useAuth();
   const { isMobile } = useSidebar();
-  const { folders } = useFavorites();
+  const { folders, deleteFolder } = useFavorites();
   const pathname = usePathname();
 
   if (loading) return null;
@@ -101,10 +93,17 @@ export function AppSidebar() {
           title: folder.name,
           url: `/favorites?folderId=${folder.id}`,
           icon: Folder,
+          folderId: folder.id,
         })),
       ],
     },
   ];
+
+  const handleDeleteFolder = async (e: React.MouseEvent, folderId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await deleteFolder(folderId);
+  };
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -150,7 +149,10 @@ export function AppSidebar() {
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubItem
+                            key={subItem.title}
+                            className="group/sub-item relative"
+                          >
                             <SidebarMenuSubButton asChild>
                               <Link href={subItem.url}>
                                 {subItem.icon && (
@@ -159,6 +161,17 @@ export function AppSidebar() {
                                 <span>{subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>
+                            {subItem.folderId && (
+                              <button
+                                className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/sub-item:opacity-100 transition-opacity p-1 rounded-md hover:bg-sidebar-accent"
+                                onClick={(e) =>
+                                  handleDeleteFolder(e, subItem.folderId!)
+                                }
+                                title="フォルダを削除"
+                              >
+                                <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive transition-colors" />
+                              </button>
+                            )}
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>

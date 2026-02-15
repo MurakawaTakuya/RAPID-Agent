@@ -238,6 +238,8 @@ export function useFavorites() {
 
   // 論文IDからお気に入りを削除するヘルパー (全削除)
   const removeFavoriteByPaperId = async (paperId: number) => {
+    if (!user) return false;
+
     // Snapshot
     const previousFavorites = [...favorites];
     const previousIds = new Set(favoritePaperIds);
@@ -344,6 +346,33 @@ export function useFavorites() {
     }
   };
 
+  const deleteFolder = async (folderId: number) => {
+    if (!user) return false;
+
+    // フォルダ名を取得（トースト用）
+    const folder = folders.find((f) => f.id === folderId);
+    const folderName = folder?.name ?? "フォルダ";
+
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/folders/${folderId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await Promise.all([fetchFolders(), fetchFavorites()]);
+        toast.success(`フォルダ「${folderName}」を削除しました`);
+        return true;
+      }
+      toast.error("フォルダの削除に失敗しました");
+      return false;
+    } catch (error) {
+      console.error("Failed to delete folder:", error);
+      toast.error("フォルダの削除に失敗しました");
+      return false;
+    }
+  };
+
   return {
     favorites,
     folders,
@@ -354,6 +383,7 @@ export function useFavorites() {
     removeFavoriteByPaperId,
     toggleFolder,
     createFolder,
+    deleteFolder,
     renameFolder,
     refreshFavorites: fetchFavorites,
     refreshFolders: fetchFolders,
