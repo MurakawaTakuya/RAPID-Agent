@@ -161,6 +161,30 @@ export function useFavorites() {
     }
   };
 
+  const renameFolder = async (folderId: number, name: string) => {
+    if (!user) return null;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/folders/${folderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const updatedFolder: Folder = await res.json();
+        await fetchFolders(); // Refresh
+        return updatedFolder;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to rename folder:", error);
+      return null;
+    }
+  };
+
   return {
     favorites,
     folders,
@@ -171,6 +195,7 @@ export function useFavorites() {
     removeFavoriteByPaperId,
     toggleFolder,
     createFolder,
+    renameFolder,
     refreshFavorites: fetchFavorites,
     refreshFolders: fetchFolders,
     // ヘルパー: 特定の論文が所属するフォルダID一覧を取得

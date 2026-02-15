@@ -2,19 +2,42 @@
 
 import { PapersTable } from "@/components/papers-table";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/use-favorites";
 import { Paper } from "@/lib/types";
+import { Check, Pencil, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 export default function FavoritesPage() {
   const { user, loading: authLoading } = useAuth();
-  const { favorites, loading: favoritesLoading, folders } = useFavorites();
+  const {
+    favorites,
+    loading: favoritesLoading,
+    folders,
+    renameFolder,
+  } = useFavorites();
   const searchParams = useSearchParams();
   const folderIdParam = searchParams.get("folderId");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+
+  const canRename = useMemo(() => {
+    if (!folderIdParam || folderIdParam === "null") return false;
+    const fid = parseInt(folderIdParam);
+    return !isNaN(fid);
+  }, [folderIdParam]);
+
+  const handleRename = async () => {
+    if (!editName.trim() || !canRename || !folderIdParam) return;
+    const fid = parseInt(folderIdParam);
+    await renameFolder(fid, editName);
+    setIsEditing(false);
+  };
 
   const filteredFavorites = useMemo(() => {
     if (!folderIdParam) {
@@ -76,7 +99,53 @@ export default function FavoritesPage() {
           <SidebarTrigger className="-ml-1" />
         </div>
         <div className="flex-1 flex justify-center h-full items-center font-semibold text-lg">
-          {currentFolderName} ({papers.length})
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-8 w-48 text-center"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleRename();
+                  if (e.key === "Escape") setIsEditing(false);
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                onClick={handleRename}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setIsEditing(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {currentFolderName} ({papers.length})
+              {canRename && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 ml-1 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setEditName(currentFolderName);
+                    setIsEditing(true);
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-end gap-2 w-[120px]">
           <AnimatedThemeToggler />
