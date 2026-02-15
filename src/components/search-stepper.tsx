@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 import {
   Stepper,
   StepperIndicator,
@@ -47,12 +49,15 @@ export function SearchStepper({ currentStep }: SearchStepperProps) {
       }}
       className="w-full max-w-xl space-y-0 flex items-center justify-center h-full" // Removed space-y-8 to fit in header better
     >
-      <StepperNav className="gap-0">
+      <StepperNav className="gap-0 justify-center">
         {steps.map((step, index) => (
           <StepperItem
             key={index}
             step={index + 1}
-            className="relative flex items-center"
+            className={cn(
+              "relative flex items-center",
+              index + 1 !== currentStep && "hidden md:flex"
+            )}
           >
             <StepperTrigger className="flex items-center gap-3" asChild>
               <div className="flex items-center gap-3 cursor-pointer">
@@ -64,7 +69,7 @@ export function SearchStepper({ currentStep }: SearchStepperProps) {
                   )}
                 </StepperIndicator>
                 <div className="flex flex-col items-start">
-                  <StepperTitle className="text-sm font-semibold">
+                  <StepperTitle className="text-sm font-semibold whitespace-nowrap">
                     {step.title}
                   </StepperTitle>
                 </div>
@@ -72,7 +77,7 @@ export function SearchStepper({ currentStep }: SearchStepperProps) {
             </StepperTrigger>
 
             {steps.length > index + 1 && (
-              <StepperSeparator className="bg-muted h-0.5 w-12 mx-4" />
+              <StepperSeparator className="bg-muted h-0.5 w-12 mx-4 hidden md:block" />
             )}
           </StepperItem>
         ))}
