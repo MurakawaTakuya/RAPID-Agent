@@ -90,8 +90,8 @@ export function PapersTable({
                     </div>
                   </th>
                 )}
-                <th className="px-4 py-3 text-left w-10">
-                  {/* Favorite Column */}
+                <th className="px-2 py-3 text-left w-10 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                  保存
                 </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
                   論文タイトル
@@ -134,7 +134,7 @@ export function PapersTable({
                       />
                     </td>
                   )}
-                  <td className="px-4 py-4 align-middle w-10">
+                  <td className="px-2 py-4 align-middle w-10">
                     <FavoriteButton
                       paperId={paper.id}
                       isFavorited={favoritePaperIds.has(paper.id)}

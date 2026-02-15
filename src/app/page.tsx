@@ -227,7 +227,7 @@ export default function Home() {
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold mt-3">
+                <h2 className="text-2xl font-bold mt-12 md:mt-3">
                   興味のある論文を検索しましょう
                 </h2>
                 <p className="text-muted-foreground">

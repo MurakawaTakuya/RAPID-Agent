@@ -37,7 +37,7 @@ export function CategorizationResults({
           return (
             <Collapsible key={cat.title} className="group/collapsible">
               <div className="rounded-lg border bg-card">
-                <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>div>svg]:rotate-90">
+                <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors cursor-pointer [&[data-state=open]>div>svg]:rotate-90">
                   <div className="flex items-center gap-2">
                     <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground" />
                     <div className="flex items-baseline gap-3 text-left">
@@ -88,7 +88,7 @@ export function CategorizationResults({
         {groupedPapers["other"] && groupedPapers["other"].length > 0 && (
           <Collapsible className="group/collapsible">
             <div className="rounded-lg border bg-card">
-              <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors [&[data-state=open]>div>svg]:rotate-90">
+              <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-muted/50 transition-colors cursor-pointer [&[data-state=open]>div>svg]:rotate-90">
                 <div className="flex items-center gap-2">
                   <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground" />
                   <div className="flex items-baseline gap-3 text-left">
