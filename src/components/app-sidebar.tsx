@@ -200,7 +200,7 @@ export function AppSidebar() {
                         <SidebarMenuSub>
                           {item.items?.map((subItem) => (
                             <SidebarMenuSubItem
-                              key={subItem.title}
+                              key={subItem.folderId || subItem.title}
                               className="group/sub-item relative"
                             >
                               <SidebarMenuSubButton asChild>
