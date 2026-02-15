@@ -76,9 +76,13 @@ export function useFavorites() {
   ): Promise<boolean> => {
     if (!user) return false;
 
+    // Snapshot for revert
+    const previousFavorites = [...favorites];
+    const previousIds = new Set(favoritePaperIds);
+
     // Optimistic update
     const tempId = Date.now(); // Temporary ID
-    // Note: We use dummy data for properites we don't have.
+    // Note: We use dummy data for properties we don't have.
     // This is safe for "isFavorited" checks (based on ID) but listing these optimistically created items
     // might show empty titles until refresh.
     const newFavorite: FavoriteWithPaper = {
@@ -132,28 +136,16 @@ export function useFavorites() {
       }
 
       // Revert on failure
-      setFavorites((prev) => prev.filter((f) => f.id !== tempId));
-      setFavoritePaperIds((prev) => {
-        const next = new Set(prev);
-        const count = favorites.filter(
-          (f) => f.id !== tempId && f.paperId === paperId
-        ).length;
-        if (count === 0) next.delete(paperId);
-        return next;
-      });
+      setFavorites(previousFavorites);
+      setFavoritePaperIds(previousIds);
+      toast.error("保存に失敗しました");
       return false;
     } catch (error) {
       console.error("Failed to add favorite:", error);
       // Revert logic
-      setFavorites((prev) => prev.filter((f) => f.id !== tempId));
-      setFavoritePaperIds((prev) => {
-        const next = new Set(prev);
-        const count = favorites.filter(
-          (f) => f.id !== tempId && f.paperId === paperId
-        ).length;
-        if (count === 0) next.delete(paperId);
-        return next;
-      });
+      setFavorites(previousFavorites);
+      setFavoritePaperIds(previousIds);
+      toast.error("保存に失敗しました");
       return false;
     }
   };

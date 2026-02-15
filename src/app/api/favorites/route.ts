@@ -93,6 +93,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // folderId が指定されている場合、自分のフォルダか検証
+    if (folderId) {
+      const folderCheck = await db
+        .select()
+        .from(schema.folders)
+        .where(
+          and(
+            eq(schema.folders.id, folderId),
+            eq(schema.folders.userId, userId)
+          )
+        );
+      if (folderCheck.length === 0) {
+        return NextResponse.json(
+          { error: "Folder not found or not authorized" },
+          { status: 403 }
+        );
+      }
+    }
+
     // 既に全く同じ組み合わせ（paperId, folderId）が存在するかチェック
     const existing = await db
       .select()

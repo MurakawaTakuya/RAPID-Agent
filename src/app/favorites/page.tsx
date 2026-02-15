@@ -90,7 +90,7 @@ function FavoritesContent() {
       return favorites.filter((f) => f.folderId === null);
     }
     const fid = parseInt(folderIdParam);
-    if (isNaN(fid)) return favorites;
+    if (isNaN(fid)) return [];
     return favorites.filter((f) => f.folderId === fid);
   }, [favorites, folderIdParam]);
 

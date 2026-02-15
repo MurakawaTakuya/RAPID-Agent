@@ -44,13 +44,11 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              {children}
-            </SidebarProvider>
-            <Toaster />
-          </AuthProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            {children}
+          </SidebarProvider>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

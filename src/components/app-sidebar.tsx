@@ -11,7 +11,6 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -70,7 +69,6 @@ export function AppSidebar() {
   const { user, signOut, loading } = useAuth();
   const { isMobile } = useSidebar();
   const { folders, deleteFolder } = useFavorites();
-  const pathname = usePathname();
 
   const [deletingFolder, setDeletingFolder] = useState<{
     id: number;

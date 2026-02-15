@@ -52,18 +52,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name } = body;
 
-    if (!name || typeof name !== "string") {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
-        { error: "Folder name is required" },
+        { error: "Valid folder name is required" },
         { status: 400 }
       );
     }
+
+    const trimmedName = name.trim();
 
     const newFolder = await db
       .insert(schema.folders)
       .values({
         userId,
-        name,
+        name: trimmedName,
       })
       .returning();
 
