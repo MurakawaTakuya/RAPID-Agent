@@ -52,10 +52,15 @@ export function useFavorites() {
 
   useEffect(() => {
     if (user) {
-      setLoading(true);
-      Promise.all([fetchFavorites(), fetchFolders()]).finally(() =>
-        setLoading(false)
-      );
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          await Promise.all([fetchFavorites(), fetchFolders()]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
     } else {
       setFavorites([]);
       setFolders([]);
@@ -66,7 +71,8 @@ export function useFavorites() {
 
   const addFavorite = async (
     paperId: number,
-    folderId?: number | null
+    folderId?: number | null,
+    customFolderName?: string
   ): Promise<boolean> => {
     if (!user) return false;
 
@@ -111,11 +117,14 @@ export function useFavorites() {
       });
       if (res.ok) {
         // Find folder name if folderId is provided
-        // Find folder name if folderId is provided
         let folderName = "デフォルト";
         if (folderId) {
           const folder = folders.find((f) => f.id === folderId);
-          if (folder) folderName = folder.name;
+          if (folder) {
+            folderName = folder.name;
+          } else if (customFolderName) {
+            folderName = customFolderName;
+          }
         }
         toast.success(`「${folderName}」に保存しました`);
         await fetchFavorites(); // Refresh to get real data
@@ -208,7 +217,12 @@ export function useFavorites() {
   };
 
   // フォルダのトグル処理
-  const toggleFolder = async (paperId: number, folderId: number | null) => {
+  // フォルダのトグル処理
+  const toggleFolder = async (
+    paperId: number,
+    folderId: number | null,
+    customFolderName?: string
+  ) => {
     const existing = favorites.find(
       (f) => f.paperId === paperId && f.folderId === folderId
     );
@@ -218,7 +232,7 @@ export function useFavorites() {
       return removeFavorite(existing.id);
     } else {
       // ない場合は追加
-      return addFavorite(paperId, folderId);
+      return addFavorite(paperId, folderId, customFolderName);
     }
   };
 
@@ -293,11 +307,13 @@ export function useFavorites() {
       if (res.ok) {
         const newFolder: Folder = await res.json();
         await fetchFolders(); // Refresh
+        toast.success(`フォルダ「${name}」を作成しました`);
         return newFolder;
       }
       return null;
     } catch (error) {
       console.error("Failed to create folder:", error);
+      toast.error("フォルダの作成に失敗しました");
       return null;
     }
   };
@@ -317,11 +333,13 @@ export function useFavorites() {
       if (res.ok) {
         const updatedFolder: Folder = await res.json();
         await fetchFolders(); // Refresh
+        toast.success(`フォルダ名を「${name}」に変更しました`);
         return updatedFolder;
       }
       return null;
     } catch (error) {
       console.error("Failed to rename folder:", error);
+      toast.error("フォルダ名の変更に失敗しました");
       return null;
     }
   };

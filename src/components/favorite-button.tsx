@@ -31,7 +31,8 @@ interface FavoriteButtonProps {
 
   onToggleFolder: (
     paperId: number,
-    folderId: number | null
+    folderId: number | null,
+    customFolderName?: string
   ) => Promise<boolean>;
   onRemove: (paperId: number) => Promise<boolean>;
   onCreateFolder: (name: string) => Promise<Folder | null>;
@@ -62,7 +63,7 @@ export function FavoriteButton({
     if (!inputValue.trim()) return;
     const newFolder = await onCreateFolder(inputValue);
     if (newFolder) {
-      await onToggleFolder(paperId, newFolder.id);
+      await onToggleFolder(paperId, newFolder.id, newFolder.name);
       // 作成時は閉じる？続けて操作したいかも？一旦閉じるか。
       // setOpen(false);
       setInputValue("");
