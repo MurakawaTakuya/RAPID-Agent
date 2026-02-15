@@ -96,7 +96,7 @@ export function PapersTable({
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground whitespace-nowrap w-32">
                   学会名・年
                 </th>
-                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
+                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground min-w-[350px]">
                   概要
                 </th>
                 {showSimilarity && (
