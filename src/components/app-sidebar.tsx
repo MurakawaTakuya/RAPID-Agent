@@ -77,23 +77,23 @@ export function AppSidebar() {
 
   const navMain: NavItem[] = [
     {
-      title: "Search",
+      title: "論文検索",
       url: "/",
       icon: Search,
     },
     {
-      title: "Favorites",
+      title: "保存した論文",
       url: "#",
       icon: Star,
       isActive: true, // Default open for Favorites
       items: [
         {
-          title: "All Favorites",
+          title: "すべて",
           url: "/favorites",
           icon: Star,
         },
         {
-          title: "Uncategorized",
+          title: "未分類",
           url: "/favorites?folderId=null",
           icon: Folder,
         },
@@ -207,7 +207,7 @@ export function AppSidebar() {
               >
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Log out
+                  ログアウト
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

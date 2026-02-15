@@ -27,10 +27,10 @@ export default function FavoritesPage() {
   }, [favorites, folderIdParam]);
 
   const currentFolderName = useMemo(() => {
-    if (!folderIdParam) return "All Favorites";
-    if (folderIdParam === "null") return "Uncategorized";
+    if (!folderIdParam) return "すべて";
+    if (folderIdParam === "null") return "未分類";
     const folder = folders.find((f) => f.id === parseInt(folderIdParam));
-    return folder ? folder.name : "Unknown Folder";
+    return folder ? folder.name : "不明なフォルダ";
   }, [folders, folderIdParam]);
 
   if (authLoading || favoritesLoading) {
@@ -44,7 +44,7 @@ export default function FavoritesPage() {
   if (!user) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Please log in to view favorites.
+        お気に入りを表示するにはログインしてください。
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function FavoritesPage() {
           />
         ) : (
           <div className="text-center py-12 text-muted-foreground text-sm">
-            No favorites found in this folder.
+            このフォルダにお気に入りは登録されていません。
           </div>
         )}
       </div>
