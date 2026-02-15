@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { SearchHistoryProvider } from "@/contexts/SearchHistoryContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -45,12 +46,14 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <SearchHistoryProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              {children}
-            </SidebarProvider>
-          </SearchHistoryProvider>
+          <FavoritesProvider>
+            <SearchHistoryProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                {children}
+              </SidebarProvider>
+            </SearchHistoryProvider>
+          </FavoritesProvider>
           <Toaster />
         </AuthProvider>
       </body>

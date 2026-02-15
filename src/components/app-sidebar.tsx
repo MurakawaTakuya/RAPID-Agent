@@ -53,8 +53,8 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { useSearchHistory } from "@/contexts/SearchHistoryContext";
-import { useFavorites } from "@/hooks/use-favorites";
 
 interface NavItem {
   title: string;

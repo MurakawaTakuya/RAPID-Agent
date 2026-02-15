@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     // フォルダIDでフィルタリングする場合
     const { searchParams } = new URL(request.url);
     const folderId = searchParams.get("folderId");
+    const idsOnly = searchParams.get("idsOnly") === "true";
 
     const conditions = [eq(schema.favorites.userId, userId)];
 
@@ -36,10 +37,33 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (idsOnly) {
+      // 軽量なデータのみ取得 (Context用)
+      const results = await db
+        .select({
+          id: schema.favorites.id,
+          paperId: schema.favorites.paperId,
+          folderId: schema.favorites.folderId,
+        })
+        .from(schema.favorites)
+        .where(and(...conditions));
+      return NextResponse.json(results);
+    }
+
+    // 通常の取得
     const results = await db
       .select({
         favorite: schema.favorites,
-        paper: schema.papers,
+        paper: {
+          id: schema.papers.id,
+          title: schema.papers.title,
+          url: schema.papers.url,
+          abstract: schema.papers.abstract,
+          authors: schema.papers.authors,
+          conferenceName: schema.papers.conferenceName,
+          conferenceYear: schema.papers.conferenceYear,
+          createdAt: schema.papers.createdAt,
+        },
         folder: schema.folders,
       })
       .from(schema.favorites)
