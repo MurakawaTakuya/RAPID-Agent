@@ -86,8 +86,8 @@ export type Favorite = typeof favorites.$inferSelect;
 export type NewFavorite = typeof favorites.$inferInsert;
 
 // 検索履歴テーブル
-export const searchHistory = pgTable(
-  "search_history",
+export const searchHistories = pgTable(
+  "search_histories",
   {
     id: serial("id").primaryKey(),
     userId: varchar("user_id", { length: 128 }).notNull(),
@@ -100,5 +100,5 @@ export const searchHistory = pgTable(
   })
 );
 
-export type SearchHistory = typeof searchHistory.$inferSelect;
-export type NewSearchHistory = typeof searchHistory.$inferInsert;
+export type SearchHistory = typeof searchHistories.$inferSelect;
+export type NewSearchHistory = typeof searchHistories.$inferInsert;

@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
   try {
     const history = await db
       .select()
-      .from(schema.searchHistory)
-      .where(eq(schema.searchHistory.userId, userId))
-      .orderBy(desc(schema.searchHistory.createdAt))
+      .from(schema.searchHistories)
+      .where(eq(schema.searchHistories.userId, userId))
+      .orderBy(desc(schema.searchHistories.createdAt))
       .limit(30);
 
     return NextResponse.json(history);
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await db
-      .insert(schema.searchHistory)
+      .insert(schema.searchHistories)
       .values({
         userId,
         keyword: keyword.trim(),
