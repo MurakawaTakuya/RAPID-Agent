@@ -1,6 +1,16 @@
 "use client";
 
 import { PapersTable } from "@/components/papers-table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +19,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/use-favorites";
 import { Paper } from "@/lib/types";
-import { Check, Pencil, X } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Check, Pencil, Trash2, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 export default function FavoritesPage() {
@@ -20,11 +30,14 @@ export default function FavoritesPage() {
     loading: favoritesLoading,
     folders,
     renameFolder,
+    deleteFolder,
   } = useFavorites();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const folderIdParam = searchParams.get("folderId");
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const canRename = useMemo(() => {
     if (!folderIdParam || folderIdParam === "null") return false;
@@ -39,11 +52,18 @@ export default function FavoritesPage() {
     setIsEditing(false);
   };
 
+  const handleDelete = async () => {
+    if (!canRename || !folderIdParam) return;
+    const fid = parseInt(folderIdParam);
+    const success = await deleteFolder(fid);
+    setShowDeleteDialog(false);
+    if (success) {
+      router.push("/favorites");
+    }
+  };
+
   const filteredFavorites = useMemo(() => {
     if (!folderIdParam) {
-      // 全表示の場合は重複排除（同じ論文が複数のフォルダにある場合）
-      // favoritesは日付順不同の可能性があるがAPIは日付順
-      // Mapを使ってpaperIdごとに最新（または最初）のエントリを残す
       const uniqueMap = new Map();
       favorites.forEach((f) => {
         if (!uniqueMap.has(f.paperId)) {
@@ -83,8 +103,6 @@ export default function FavoritesPage() {
     );
   }
 
-  // PapersTable expects Paper[]. Favorites are FavoriteWithPaper[].
-  // We need to map them to Paper[].
   const papers = filteredFavorites.map(
     (f): Paper => ({
       ...f.paper,
@@ -129,20 +147,31 @@ export default function FavoritesPage() {
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {currentFolderName} ({papers.length})
               {canRename && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 ml-1 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    setEditName(currentFolderName);
-                    setIsEditing(true);
-                  }}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 ml-1 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setEditName(currentFolderName);
+                      setIsEditing(true);
+                    }}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    title="フォルダを削除"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </>
               )}
             </div>
           )}
@@ -167,6 +196,22 @@ export default function FavoritesPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>フォルダを削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              フォルダ「{currentFolderName}」を削除します。
+              フォルダ内の論文はデフォルトに移動されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>削除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarInset>
   );
 }
