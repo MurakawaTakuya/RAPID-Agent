@@ -2,8 +2,11 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  Check,
   ChevronsUpDown,
+  Copy,
   Folder,
+  History,
   LogOut,
   LucideIcon,
   Search,
@@ -11,7 +14,8 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -50,6 +54,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useSearchHistory } from "@/hooks/use-search-history";
 
 interface NavItem {
   title: string;
@@ -70,11 +75,24 @@ export function AppSidebar() {
   const { user, signOut, loading } = useAuth();
   const { isMobile } = useSidebar();
   const { folders, deleteFolder } = useFavorites();
+  const { history } = useSearchHistory();
 
   const [deletingFolder, setDeletingFolder] = useState<{
     id: number;
     name: string;
   } | null>(null);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopyKeyword = useCallback(async (id: number, keyword: string) => {
+    try {
+      await navigator.clipboard.writeText(keyword);
+      setCopiedId(id);
+      toast.success("コピーしました");
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      toast.error("コピーに失敗しました");
+    }
+  }, []);
 
   if (loading) return null;
 
@@ -216,6 +234,56 @@ export function AppSidebar() {
                   </Collapsible>
                 );
               })}
+
+              {/* Search History */}
+              {history.length > 0 && (
+                <Collapsible
+                  asChild
+                  defaultOpen
+                  className="group/collapsible mt-2"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip="検索履歴"
+                        className="cursor-pointer"
+                      >
+                        <History />
+                        <span>検索履歴</span>
+                        <ChevronsUpDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {history.map((item) => (
+                          <SidebarMenuSubItem
+                            key={item.id}
+                            className="group/history-item relative"
+                          >
+                            <SidebarMenuSubButton asChild>
+                              <button
+                                onClick={() =>
+                                  handleCopyKeyword(item.id, item.keyword)
+                                }
+                                className="w-full cursor-pointer"
+                              >
+                                <span className="truncate">{item.keyword}</span>
+                                <span className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/history-item:opacity-100 transition-opacity">
+                                  {copiedId === item.id ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3 text-muted-foreground" />
+                                  )}
+                                </span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
