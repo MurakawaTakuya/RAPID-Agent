@@ -2,7 +2,7 @@
 
 import { FavoriteButton } from "@/components/favorite-button";
 import { Button } from "@/components/ui/button";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { Paper } from "@/lib/types";
 import { useState } from "react";
 
@@ -35,7 +35,6 @@ export function PapersTable({
 
   const {
     favoritePaperIds,
-    favorites, // used for getFolderId logic replacement helpers
     folders,
     removeFavoriteByPaperId,
     createFolder,

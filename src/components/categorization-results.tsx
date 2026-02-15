@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { CategorizedPaper } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Star } from "lucide-react";

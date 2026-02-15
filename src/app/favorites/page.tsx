@@ -17,11 +17,19 @@ import { Input } from "@/components/ui/input";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { Favorite, Folder } from "@/db/schema";
 import { Paper } from "@/lib/types";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+// FavoriteWithPaper type definition for local use
+type FavoriteWithPaper = Favorite & {
+  paper: Paper;
+  folder: Folder | null;
+};
 
 export default function FavoritesPage() {
   return (
@@ -40,18 +48,82 @@ export default function FavoritesPage() {
 function FavoritesContent() {
   const { user, loading: authLoading } = useAuth();
   const {
-    favorites,
-    loading: favoritesLoading,
     folders,
+    loading: contextLoading,
     renameFolder,
     deleteFolder,
   } = useFavorites();
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const folderIdParam = searchParams.get("folderId");
+
+  // Local state for full favorite papers
+  const [favorites, setFavorites] = useState<FavoriteWithPaper[]>([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const papers = useMemo(() => {
+    const uniqueMap = new Map<number, Paper>();
+    favorites.forEach((f) => {
+      if (!uniqueMap.has(f.paperId)) {
+        uniqueMap.set(f.paperId, {
+          ...f.paper,
+          cosineSimilarity: null,
+        });
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }, [favorites]);
+
+  // Fetch favorites when folderIdParam changes
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
+      setFavoritesLoading(true);
+      try {
+        const token = await user.getIdToken();
+        const url = new URL("/api/favorites", window.location.href);
+        if (folderIdParam) {
+          url.searchParams.set("folderId", folderIdParam);
+        }
+
+        const res = await fetch(url.toString(), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // 「すべて」表示の際は、論文が重複しないようにクライアント側でユニークにする
+          if (!folderIdParam) {
+            const uniqueMap = new Map<number, FavoriteWithPaper>();
+            data.forEach((f: FavoriteWithPaper) => {
+              if (!uniqueMap.has(f.paperId)) {
+                uniqueMap.set(f.paperId, f);
+              }
+            });
+            setFavorites(Array.from(uniqueMap.values()));
+          } else {
+            setFavorites(data);
+          }
+        } else {
+          console.error("Failed to fetch favorites");
+          toast.error("お気に入りの取得に失敗しました");
+        }
+      } catch (error) {
+        console.error("Failed to fetch favorites:", error);
+        toast.error("お気に入りの取得に失敗しました");
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
+    fetchFavorites();
+  }, [user, folderIdParam]);
 
   const canRename = useMemo(() => {
     if (!folderIdParam || folderIdParam === "null") return false;
@@ -76,24 +148,6 @@ function FavoritesContent() {
     }
   };
 
-  const filteredFavorites = useMemo(() => {
-    if (!folderIdParam) {
-      const uniqueMap = new Map();
-      favorites.forEach((f) => {
-        if (!uniqueMap.has(f.paperId)) {
-          uniqueMap.set(f.paperId, f);
-        }
-      });
-      return Array.from(uniqueMap.values());
-    }
-    if (folderIdParam === "null") {
-      return favorites.filter((f) => f.folderId === null);
-    }
-    const fid = parseInt(folderIdParam);
-    if (isNaN(fid)) return [];
-    return favorites.filter((f) => f.folderId === fid);
-  }, [favorites, folderIdParam]);
-
   const currentFolderName = useMemo(() => {
     if (!folderIdParam) return "すべて";
     if (folderIdParam === "null") return "デフォルト";
@@ -101,7 +155,8 @@ function FavoritesContent() {
     return folder ? folder.name : "不明なフォルダ";
   }, [folders, folderIdParam]);
 
-  if (authLoading || favoritesLoading) {
+  if (authLoading || (contextLoading && folders.length === 0)) {
+    // Wait for auth and initial folder load (at least to know if they exist)
     return (
       <div className="flex bg-sidebar h-screen w-full items-center justify-center">
         <Spinner className="h-8 w-8" />
@@ -116,13 +171,6 @@ function FavoritesContent() {
       </div>
     );
   }
-
-  const papers = filteredFavorites.map(
-    (f): Paper => ({
-      ...f.paper,
-      cosineSimilarity: null,
-    })
-  );
 
   return (
     <SidebarInset>
@@ -162,7 +210,7 @@ function FavoritesContent() {
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              {currentFolderName} ({papers.length})
+              {currentFolderName} ({favoritesLoading ? "..." : papers.length})
               {canRename && (
                 <>
                   <Button
@@ -196,7 +244,11 @@ function FavoritesContent() {
       </header>
 
       <div className="flex flex-col items-center gap-8 w-full max-w-7xl px-4 mx-auto pb-24">
-        {papers.length > 0 ? (
+        {favoritesLoading ? (
+          <div className="flex justify-center py-12">
+            <Spinner className="h-8 w-8" />
+          </div>
+        ) : papers.length > 0 ? (
           <PapersTable
             papers={papers}
             selectedPapers={new Set()}
