@@ -23,7 +23,7 @@ interface FavoritesContextType {
     folderId?: number | null,
     customFolderName?: string
   ) => Promise<boolean>;
-  removeFavorite: (favoriteId: number, paperId: number) => Promise<boolean>;
+  removeFavorite: (favoriteId: number) => Promise<boolean>;
   removeFavoriteByPaperId: (paperId: number) => Promise<boolean>;
   toggleFolder: (
     paperId: number,
@@ -32,7 +32,10 @@ interface FavoritesContextType {
   ) => Promise<boolean>;
   createFolder: (name: string) => Promise<Folder | null>;
   renameFolder: (folderId: number, name: string) => Promise<Folder | null>;
-  deleteFolder: (folderId: number) => Promise<boolean>;
+  deleteFolder: (
+    folderId: number,
+    options?: { silent?: boolean }
+  ) => Promise<boolean>;
   addGroupToFolder: (
     paperIds: number[],
     folderName: string
@@ -188,15 +191,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const removeFavorite = async (
-    favoriteId: number,
-    paperId: number
-  ): Promise<boolean> => {
+  const removeFavorite = async (favoriteId: number): Promise<boolean> => {
     // NOTE: favoriteId is needed to delete specific entry.
-    // But unlike before, we accept paperId to help with looking up folder name for toast.
-    // Actually `removeFavorite` in use-favorites.ts took `favoriteId`.
-    // We should keep that signature or adapt.
-    // The calling code usually knows behavior.
     if (!user) return false;
 
     const prevItems = [...favoriteItems];
@@ -283,7 +279,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       (f) => f.paperId === paperId && f.folderId === folderId
     );
     if (existing) {
-      return removeFavorite(existing.id, paperId);
+      return removeFavorite(existing.id);
     } else {
       return addFavorite(paperId, folderId, customFolderName);
     }
@@ -343,7 +339,10 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteFolder = async (folderId: number) => {
+  const deleteFolder = async (
+    folderId: number,
+    options?: { silent?: boolean }
+  ) => {
     if (!user) return false;
     const folder = folders.find((f) => f.id === folderId);
     const folderName = folder?.name ?? "フォルダ";
@@ -361,14 +360,20 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         // Backend currently says: "Folder deleted" -> items.folderId becomes null (set null).
         // user needs to refresh favoriteItems to reflect that change (folderId: id -> null).
         await fetchFavoritesIds();
-        toast.success(`フォルダ「${folderName}」を削除しました`);
+        if (!options?.silent) {
+          toast.success(`フォルダ「${folderName}」を削除しました`);
+        }
         return true;
       }
-      toast.error("フォルダの削除に失敗しました");
+      if (!options?.silent) {
+        toast.error("フォルダの削除に失敗しました");
+      }
       return false;
     } catch (error) {
       console.error("Failed to delete folder:", error);
-      toast.error("フォルダの削除に失敗しました");
+      if (!options?.silent) {
+        toast.error("フォルダの削除に失敗しました");
+      }
       return false;
     }
   };
@@ -403,7 +408,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       } else {
         // Rollback
         try {
-          await deleteFolder(newFolder.id);
+          await deleteFolder(newFolder.id, { silent: true });
         } catch (e) {
           console.error("Failed to rollback", e);
         }

@@ -98,7 +98,18 @@ function FavoritesContent() {
 
         if (res.ok) {
           const data = await res.json();
-          setFavorites(data);
+          // 「すべて」表示の際は、論文が重複しないようにクライアント側でユニークにする
+          if (!folderIdParam) {
+            const uniqueMap = new Map<number, FavoriteWithPaper>();
+            data.forEach((f: FavoriteWithPaper) => {
+              if (!uniqueMap.has(f.paperId)) {
+                uniqueMap.set(f.paperId, f);
+              }
+            });
+            setFavorites(Array.from(uniqueMap.values()));
+          } else {
+            setFavorites(data);
+          }
         } else {
           console.error("Failed to fetch favorites");
           toast.error("お気に入りの取得に失敗しました");
