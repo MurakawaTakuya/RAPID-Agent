@@ -1,5 +1,4 @@
-// TODO: DBとAPIをログインユーザーのみ&セキュリティチェックありにする
-
+import { getUserIdFromRequest } from "@/lib/auth-server";
 import { db, schema } from "@/lib/db";
 import { upsertPaper } from "@/services/papers";
 import { eq } from "drizzle-orm";
@@ -7,6 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 // GET /api/papers?url=xxx - 論文をURLで検索
 export async function GET(request: NextRequest) {
+  const userId = await getUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!db) {
     return NextResponse.json(
       { error: "Database not configured" },
@@ -61,16 +65,33 @@ export async function GET(request: NextRequest) {
 
 // POST /api/papers - 論文を追加（embedding 付き）
 export async function POST(request: NextRequest) {
+  // ハッカソン期間外は論文追加を無効化
+  return NextResponse.json(
+    { error: "論文追加はハッカソン期間外のため無効です" },
+    { status: 403 }
+  );
+
+  // Allow access via internal API key (server-to-server) or authenticated user
+  const apiKey = request.headers.get("X-Internal-Secret");
+  const isInternalCall =
+    apiKey !== undefined &&
+    apiKey !== null &&
+    process.env.INTERNAL_API_KEY !== undefined &&
+    apiKey === process.env.INTERNAL_API_KEY;
+
+  if (!isInternalCall) {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   if (!db) {
     return NextResponse.json(
       { error: "Database not configured" },
       { status: 500 }
     );
   }
-
-  // TODO: Add security check (e.g., INTERNAL_API_KEY) to restrict access to internal systems only.
-  // const apiKey = request.headers.get('X-Internal-Secret');
-  // if (apiKey !== process.env.INTERNAL_API_KEY) { ... }
 
   try {
     const body = await request.json();
