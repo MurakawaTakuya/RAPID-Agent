@@ -19,18 +19,20 @@ import { Spinner } from "@/components/ui/spinner";
 import { useFavorites } from "@/hooks/use-favorites";
 import { CategorizedPaper } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ChevronRight, FolderHeart } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import { useState } from "react";
 import { PapersTable } from "./papers-table";
 
 interface CategorizationResultsProps {
   groupedPapers: Record<string, CategorizedPaper[]>;
   categories: { title: string; content: string }[];
+  searchKeyword?: string;
 }
 
 export function CategorizationResults({
   groupedPapers,
   categories,
+  searchKeyword,
 }: CategorizationResultsProps) {
   const emptySet = new Set<number>();
   const { addGroupToFolder } = useFavorites();
@@ -42,10 +44,8 @@ export function CategorizationResults({
   const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenDialog = (groupTitle: string, papers: CategorizedPaper[]) => {
-    // 学会名と年をグループ内の論文から取得
-    const conferenceName = papers.find((p) => p.conferenceName)?.conferenceName;
-    const conferenceYear = papers.find((p) => p.conferenceYear)?.conferenceYear;
-    const parts = [conferenceName, conferenceYear, groupTitle].filter(Boolean);
+    // 検索キーワードとグループ名を組み合わせる
+    const parts = [searchKeyword, groupTitle].filter(Boolean);
     setFolderName(parts.join(" "));
     setTargetPaperIds(papers.map((p) => p.id));
     setDialogOpen(true);
@@ -81,7 +81,7 @@ export function CategorizationResults({
         }}
         title="グループをお気に入りに追加"
       >
-        <FolderHeart className="h-4 w-4" />
+        <Star className="h-4 w-4" />
       </Button>
     );
   };
