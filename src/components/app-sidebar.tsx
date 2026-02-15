@@ -12,7 +12,16 @@ import { useAuth } from "@/contexts/AuthContext";
 //   SquareTerminal,
 //   Star,
 // } from "lucide-react";
-import { ChevronsUpDown, LogOut, LucideIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Folder,
+  LogOut,
+  LucideIcon,
+  Search,
+  Star,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -40,6 +49,7 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useFavorites } from "@/hooks/use-favorites";
 
 interface NavItem {
   title: string;
@@ -53,79 +63,11 @@ interface NavItem {
   }[];
 }
 
-const data: { navMain: NavItem[] } = {
-  navMain: [
-    // {
-    //   title: "Playground",
-    //   url: "#",
-    //   icon: SquareTerminal,
-    //   isActive: true,
-    //   items: [
-    //     {
-    //       title: "History",
-    //       url: "#",
-    //       icon: History,
-    //     },
-    //     {
-    //       title: "Starred",
-    //       url: "#",
-    //       icon: Star,
-    //     },
-    //     {
-    //       title: "Settings",
-    //       url: "#",
-    //       icon: Settings2,
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "Models",
-    //   url: "#",
-    //   icon: Bot,
-    //   items: [
-    //     {
-    //       title: "Genesis",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Explorer",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Quantum",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "Settings",
-    //   url: "#",
-    //   icon: Settings2,
-    //   items: [
-    //     {
-    //       title: "General",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Team",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Billing",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Limits",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-  ],
-};
-
 export function AppSidebar() {
   const { user, signOut, loading } = useAuth();
   const { isMobile } = useSidebar();
+  const { folders } = useFavorites();
+  const pathname = usePathname();
 
   if (loading) return null;
 
@@ -133,46 +75,98 @@ export function AppSidebar() {
 
   const userInitials = user.email ? user.email.slice(0, 2).toUpperCase() : "CN";
 
+  const navMain: NavItem[] = [
+    {
+      title: "Search",
+      url: "/",
+      icon: Search,
+    },
+    {
+      title: "Favorites",
+      url: "#",
+      icon: Star,
+      isActive: true, // Default open for Favorites
+      items: [
+        {
+          title: "All Favorites",
+          url: "/favorites",
+          icon: Star,
+        },
+        {
+          title: "Uncategorized",
+          url: "/favorites?folderId=null",
+          icon: Folder,
+        },
+        ...folders.map((folder) => ({
+          title: folder.name,
+          url: `/favorites?folderId=${folder.id}`,
+          icon: Folder,
+        })),
+      ],
+    },
+  ];
+
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>RAPID Agent</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            <Link href="/" className="flex items-center gap-2 w-full">
+              RAPID Agent
+            </Link>
+          </SidebarGroupLabel>
           <SidebarMenu>
-            {data.navMain.map((item) => (
-              <Collapsible
-                key={item.title}
-                asChild
-                defaultOpen={item.isActive}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronsUpDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+            {navMain.map((item) => {
+              // If no items, render as a simple link
+              if (!item.items?.length) {
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <Link href={item.url}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </Link>
                     </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
-                            <a href={subItem.url}>
-                              {subItem.icon && (
-                                <subItem.icon className="mr-2 h-4 w-4" />
-                              )}
-                              <span>{subItem.title}</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            ))}
+                  </SidebarMenuItem>
+                );
+              }
+
+              // Otherwise render as collapsible
+              return (
+                <Collapsible
+                  key={item.title}
+                  asChild
+                  defaultOpen={item.isActive}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                        <ChevronsUpDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items?.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link href={subItem.url}>
+                                {subItem.icon && (
+                                  <subItem.icon className="mr-2 h-4 w-4" />
+                                )}
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              );
+            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

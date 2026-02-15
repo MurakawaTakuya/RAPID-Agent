@@ -111,7 +111,7 @@ export function Introduction() {
               スマートフィルタリング
             </h3>
             <p className="text-muted-foreground">
-              CVPR, ICCV, ECCVなどの主要カンファレンスや開催年で絞り込み、
+              CVPR, ICCV, WACVなどの主要カンファレンスや開催年で絞り込み、
               トレンドや質の高い研究を素早く見つけ出します。
             </p>
           </div>
