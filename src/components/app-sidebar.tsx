@@ -136,9 +136,9 @@ export function AppSidebar() {
     <>
       <Sidebar variant="sidebar" collapsible="icon">
         <SidebarContent>
-          <SidebarGroup>
+          <SidebarGroup className="gap-5 py-5">
             <SidebarGroupLabel>
-              <Link href="/" className="flex items-center gap-2 w-full">
+              <Link href="/" className="flex items-center gap-2 w-full my-2">
                 RAPID Agent
               </Link>
             </SidebarGroupLabel>
