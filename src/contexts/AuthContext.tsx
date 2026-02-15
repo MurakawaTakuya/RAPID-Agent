@@ -15,6 +15,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
