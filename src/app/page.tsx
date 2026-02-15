@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSearchHistory } from "@/hooks/use-search-history";
+import { useSearchHistory } from "@/contexts/SearchHistoryContext";
 import { CategorizationInfo, CategorizedPaper } from "@/lib/types";
 import { parseErrorResponse } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
