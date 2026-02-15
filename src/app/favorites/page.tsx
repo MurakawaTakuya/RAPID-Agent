@@ -66,6 +66,19 @@ function FavoritesContent() {
   const [editName, setEditName] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const papers = useMemo(() => {
+    const uniqueMap = new Map<number, Paper>();
+    favorites.forEach((f) => {
+      if (!uniqueMap.has(f.paperId)) {
+        uniqueMap.set(f.paperId, {
+          ...f.paper,
+          cosineSimilarity: null,
+        });
+      }
+    });
+    return Array.from(uniqueMap.values());
+  }, [favorites]);
+
   // Fetch favorites when folderIdParam changes
   useEffect(() => {
     if (!user) return;
@@ -147,13 +160,6 @@ function FavoritesContent() {
       </div>
     );
   }
-
-  const papers = favorites.map(
-    (f): Paper => ({
-      ...f.paper,
-      cosineSimilarity: null,
-    })
-  );
 
   return (
     <SidebarInset>
