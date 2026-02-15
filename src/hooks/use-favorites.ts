@@ -365,6 +365,44 @@ export function useFavorites() {
     }
   };
 
+  const addGroupToFolder = async (
+    paperIds: number[],
+    folderName: string
+  ): Promise<boolean> => {
+    if (!user || paperIds.length === 0) return false;
+
+    try {
+      // 1. フォルダを作成
+      const newFolder = await createFolder(folderName);
+      if (!newFolder) return false;
+
+      // 2. 一括追加エンドポイントで全論文をフォルダに追加
+      const token = await user.getIdToken();
+      const res = await fetch("/api/favorites/batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ paperIds, folderId: newFolder.id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        await fetchFavorites();
+        toast.success(`${data.added}件の論文を「${folderName}」に保存しました`);
+        return true;
+      } else {
+        toast.error("グループの保存に失敗しました");
+        return false;
+      }
+    } catch (error) {
+      console.error("Failed to add group to folder:", error);
+      toast.error("グループの保存に失敗しました");
+      return false;
+    }
+  };
+
   return {
     favorites,
     folders,
@@ -377,6 +415,7 @@ export function useFavorites() {
     createFolder,
     deleteFolder,
     renameFolder,
+    addGroupToFolder,
     refreshFavorites: fetchFavorites,
     refreshFolders: fetchFolders,
     // ヘルパー: 特定の論文が所属するフォルダID一覧を取得

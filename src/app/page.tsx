@@ -286,6 +286,7 @@ export default function Home() {
               <CategorizationResults
                 groupedPapers={groupedPapers}
                 categories={categorizationInfo.categories}
+                searchKeyword={keyword}
               />
             </motion.main>
           )}
