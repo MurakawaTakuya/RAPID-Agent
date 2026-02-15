@@ -53,9 +53,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { keyword, conferences } = body;
 
-    if (!keyword || typeof keyword !== "string") {
+    if (typeof keyword !== "string") {
       return NextResponse.json(
         { error: "keyword is required" },
+        { status: 400 }
+      );
+    }
+
+    const trimmedKeyword = keyword.trim();
+    if (trimmedKeyword.length === 0) {
+      return NextResponse.json(
+        { error: "keyword is required" },
+        { status: 400 }
+      );
+    }
+
+    if (conferences && !Array.isArray(conferences)) {
+      return NextResponse.json(
+        { error: "conferences must be an array" },
         { status: 400 }
       );
     }
@@ -64,7 +79,7 @@ export async function POST(request: NextRequest) {
       .insert(schema.searchHistories)
       .values({
         userId,
-        keyword: keyword.trim(),
+        keyword: trimmedKeyword,
         conferences: conferences ? JSON.stringify(conferences) : null,
       })
       .returning();

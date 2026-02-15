@@ -76,7 +76,7 @@ export function SearchHistoryProvider({ children }: { children: ReactNode }) {
         conferences: JSON.stringify(conferences),
         createdAt: new Date().toISOString(),
       };
-      setHistory((prev) => [optimisticItem, ...prev]);
+      setHistory((prev) => [optimisticItem, ...prev].slice(0, 30));
 
       try {
         const token = await user.getIdToken();
