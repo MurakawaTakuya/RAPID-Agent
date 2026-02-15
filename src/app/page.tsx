@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchHistory } from "@/contexts/SearchHistoryContext";
 import { CategorizationInfo, CategorizedPaper } from "@/lib/types";
 import { parseErrorResponse } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -20,6 +21,7 @@ const DEFAULT_SIMILARITY_THRESHOLD = 0.66;
 
 export default function Home() {
   const { user, loading } = useAuth();
+  const { addHistory } = useSearchHistory();
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(0);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
@@ -243,6 +245,7 @@ export default function Home() {
                 onKeywordChange={setKeyword}
                 threshold={threshold}
                 onThresholdChange={setThreshold}
+                onSearchComplete={addHistory}
               />
             </motion.main>
           )}

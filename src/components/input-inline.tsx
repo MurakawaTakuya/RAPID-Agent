@@ -40,6 +40,7 @@ export interface InputInlineProps {
   onKeywordChange: (value: string) => void;
   threshold: number[];
   onThresholdChange: (value: number[]) => void;
+  onSearchComplete?: (keyword: string, conferences: string[]) => void;
 }
 
 export function InputInline({
@@ -51,6 +52,7 @@ export function InputInline({
   onKeywordChange,
   threshold,
   onThresholdChange,
+  onSearchComplete,
 }: InputInlineProps) {
   const [conferenceOptions, setConferenceOptions] = useState<ConferenceGroup[]>(
     []
@@ -149,6 +151,7 @@ export function InputInline({
       if (response.ok) {
         if (data.papers) {
           onResultChange(data);
+          onSearchComplete?.(searchKeyword, selectedConferences);
         } else if (data.error) {
           setError(data.error);
         } else {

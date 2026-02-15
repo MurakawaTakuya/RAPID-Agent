@@ -84,3 +84,21 @@ export type Folder = typeof folders.$inferSelect;
 export type NewFolder = typeof folders.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
 export type NewFavorite = typeof favorites.$inferInsert;
+
+// 検索履歴テーブル
+export const searchHistories = pgTable(
+  "search_histories",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id", { length: 128 }).notNull(),
+    keyword: varchar("keyword", { length: 500 }).notNull(),
+    conferences: text("conferences"), // JSON string of selected conferences
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("idx_search_history_user_id").on(table.userId),
+  })
+);
+
+export type SearchHistory = typeof searchHistories.$inferSelect;
+export type NewSearchHistory = typeof searchHistories.$inferInsert;
