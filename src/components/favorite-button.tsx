@@ -175,7 +175,7 @@ export function FavoriteButton({
                     className="text-destructive text-xs focus:text-destructive cursor-pointer"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    お気に入りから削除
+                    すべてのお気に入りから削除
                   </CommandItem>
                 </CommandGroup>
               </>
