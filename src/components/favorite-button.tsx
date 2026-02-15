@@ -24,8 +24,15 @@ interface FavoriteButtonProps {
   paperId: number;
   isFavorited: boolean;
   folders: Folder[];
-  currentFolderId?: number | null; // Optional: to show checkmark
-  onFavorite: (paperId: number, folderId?: number | null) => Promise<boolean>;
+  // currentFolderId? は不要になる（複数選択可のため）
+  // 代わりに、この論文が所属しているフォルダIDのSetを受け取る
+  selectedFolderIds?: Set<number>;
+  isDefault?: boolean;
+
+  onToggleFolder: (
+    paperId: number,
+    folderId: number | null
+  ) => Promise<boolean>;
   onRemove: (paperId: number) => Promise<boolean>;
   onCreateFolder: (name: string) => Promise<Folder | null>;
   className?: string;
@@ -35,8 +42,10 @@ export function FavoriteButton({
   paperId,
   isFavorited,
   folders,
-  currentFolderId,
-  onFavorite,
+  selectedFolderIds = new Set(),
+  isDefault = false,
+
+  onToggleFolder,
   onRemove,
   onCreateFolder,
   className,
@@ -45,16 +54,17 @@ export function FavoriteButton({
   const [inputValue, setInputValue] = useState("");
 
   const handleSelectFolder = async (folderId: number | null) => {
-    await onFavorite(paperId, folderId);
-    setOpen(false);
+    await onToggleFolder(paperId, folderId);
+    // ポップアップは閉じない（複数選択のため）
   };
 
   const handleCreateFolder = async () => {
     if (!inputValue.trim()) return;
     const newFolder = await onCreateFolder(inputValue);
     if (newFolder) {
-      await onFavorite(paperId, newFolder.id);
-      setOpen(false);
+      await onToggleFolder(paperId, newFolder.id);
+      // 作成時は閉じる？続けて操作したいかも？一旦閉じるか。
+      // setOpen(false);
       setInputValue("");
     }
   };
@@ -90,7 +100,8 @@ export function FavoriteButton({
       </PopoverTrigger>
       <PopoverContent
         className="w-[220px] p-0"
-        align="end"
+        side="left"
+        align="start"
         onClick={(e) => e.stopPropagation()}
       >
         <Command>
@@ -123,18 +134,17 @@ export function FavoriteButton({
                 onSelect={() => handleSelectFolder(null)}
                 className="text-xs cursor-pointer"
               >
-                <Check
+                <div
                   className={cn(
-                    "mr-2 h-4 w-4",
-                    !isFavorited ||
-                      currentFolderId === null ||
-                      currentFolderId === undefined
-                      ? "opacity-100"
-                      : "opacity-0"
-                    // currentFolderIdがundefinedの場合は判定が難しいが、とりあえず簡易実装
+                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                    isDefault
+                      ? "bg-primary text-primary-foreground"
+                      : "opacity-50 [&_svg]:invisible"
                   )}
-                />
-                未分類 (フォルダなし)
+                >
+                  <Check className="h-3 w-3" />
+                </div>
+                デフォルト
               </CommandItem>
               {folders.map((folder) => (
                 <CommandItem
@@ -142,14 +152,16 @@ export function FavoriteButton({
                   onSelect={() => handleSelectFolder(folder.id)}
                   className="text-xs cursor-pointer"
                 >
-                  <Check
+                  <div
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      currentFolderId === folder.id
-                        ? "opacity-100"
-                        : "opacity-0"
+                      "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                      selectedFolderIds.has(folder.id)
+                        ? "bg-primary text-primary-foreground"
+                        : "opacity-50 [&_svg]:invisible"
                     )}
-                  />
+                  >
+                    <Check className="h-3 w-3" />
+                  </div>
                   {folder.name}
                 </CommandItem>
               ))}

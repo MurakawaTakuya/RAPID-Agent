@@ -93,30 +93,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 既に登録済みかチェック
+    // 既に全く同じ組み合わせ（paperId, folderId）が存在するかチェック
     const existing = await db
       .select()
       .from(schema.favorites)
       .where(
         and(
           eq(schema.favorites.userId, userId),
-          eq(schema.favorites.paperId, paperId)
+          eq(schema.favorites.paperId, paperId),
+          folderId
+            ? eq(schema.favorites.folderId, folderId)
+            : isNull(schema.favorites.folderId)
         )
       );
 
     if (existing.length > 0) {
-      // 既に登録済みの場合は更新 (フォルダ移動など)
-      const updated = await db
-        .update(schema.favorites)
-        .set({
-          folderId: folderId || null,
-        })
-        .where(eq(schema.favorites.id, existing[0].id))
-        .returning();
-      return NextResponse.json(updated[0]);
+      // 既に存在する場合は何もしない（冪等性）
+      return NextResponse.json(existing[0]);
     }
 
     // 新規登録
+    // "Default" (null) folder acts as a regular folder now, so we don't delete it
+    // when adding to other folders.
+
     const newFavorite = await db
       .insert(schema.favorites)
       .values({

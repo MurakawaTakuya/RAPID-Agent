@@ -108,13 +108,33 @@ export function useFavorites() {
     }
   };
 
-  // 論文IDからお気に入りを削除するヘルパー
-  const removeFavoriteByPaperId = async (paperId: number) => {
-    const favorite = favorites.find((f) => f.paperId === paperId);
-    if (favorite) {
-      return removeFavorite(favorite.id);
+  // フォルダのトグル処理
+  const toggleFolder = async (paperId: number, folderId: number | null) => {
+    const existing = favorites.find(
+      (f) => f.paperId === paperId && f.folderId === folderId
+    );
+
+    if (existing) {
+      // 既にある場合は削除
+      const success = await removeFavorite(existing.id);
+
+      return success;
+    } else {
+      // ない場合は追加
+      return addFavorite(paperId, folderId);
     }
-    return false;
+  };
+
+  // 論文IDからお気に入りを削除するヘルパー (全削除)
+  const removeFavoriteByPaperId = async (paperId: number) => {
+    // この論文に関連する全てのエントリを削除
+    const relatedFavorites = favorites.filter((f) => f.paperId === paperId);
+    if (relatedFavorites.length === 0) return false;
+
+    const results = await Promise.all(
+      relatedFavorites.map((f) => removeFavorite(f.id))
+    );
+    return results.every((r) => r);
   };
 
   const createFolder = async (name: string) => {
@@ -149,8 +169,23 @@ export function useFavorites() {
     addFavorite,
     removeFavorite,
     removeFavoriteByPaperId,
+    toggleFolder,
     createFolder,
     refreshFavorites: fetchFavorites,
     refreshFolders: fetchFolders,
+    // ヘルパー: 特定の論文が所属するフォルダID一覧を取得
+    getPaperFolderIds: (paperId: number) => {
+      return new Set(
+        favorites
+          .filter((f) => f.paperId === paperId && f.folderId !== null)
+          .map((f) => f.folderId as number)
+      );
+    },
+    // ヘルパー: 特定の論文がデフォルト（未分類）に含まれるか
+    isPaperInDefault: (paperId: number) => {
+      return favorites.some(
+        (f) => f.paperId === paperId && f.folderId === null
+      );
+    },
   };
 }

@@ -93,7 +93,7 @@ export function AppSidebar() {
           icon: Star,
         },
         {
-          title: "未分類",
+          title: "デフォルト",
           url: "/favorites?folderId=null",
           icon: Folder,
         },

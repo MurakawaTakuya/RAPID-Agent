@@ -35,17 +35,14 @@ export function PapersTable({
 
   const {
     favoritePaperIds,
-    favorites,
+    favorites, // used for getFolderId logic replacement helpers
     folders,
-    addFavorite,
     removeFavoriteByPaperId,
     createFolder,
+    toggleFolder,
+    getPaperFolderIds,
+    isPaperInDefault,
   } = useFavorites();
-
-  const getFolderId = (paperId: number) => {
-    const fav = favorites.find((f) => f.paperId === paperId);
-    return fav ? fav.folderId : null;
-  };
 
   const toggleAbstract = (id: number) => {
     setExpandedAbstracts((prev) => {
@@ -139,8 +136,9 @@ export function PapersTable({
                       paperId={paper.id}
                       isFavorited={favoritePaperIds.has(paper.id)}
                       folders={folders}
-                      currentFolderId={getFolderId(paper.id)}
-                      onFavorite={addFavorite}
+                      selectedFolderIds={getPaperFolderIds(paper.id)}
+                      isDefault={isPaperInDefault(paper.id)}
+                      onToggleFolder={toggleFolder}
                       onRemove={removeFavoriteByPaperId}
                       onCreateFolder={createFolder}
                     />

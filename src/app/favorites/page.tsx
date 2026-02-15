@@ -17,7 +17,18 @@ export default function FavoritesPage() {
   const folderIdParam = searchParams.get("folderId");
 
   const filteredFavorites = useMemo(() => {
-    if (!folderIdParam) return favorites;
+    if (!folderIdParam) {
+      // 全表示の場合は重複排除（同じ論文が複数のフォルダにある場合）
+      // favoritesは日付順不同の可能性があるがAPIは日付順
+      // Mapを使ってpaperIdごとに最新（または最初）のエントリを残す
+      const uniqueMap = new Map();
+      favorites.forEach((f) => {
+        if (!uniqueMap.has(f.paperId)) {
+          uniqueMap.set(f.paperId, f);
+        }
+      });
+      return Array.from(uniqueMap.values());
+    }
     if (folderIdParam === "null") {
       return favorites.filter((f) => f.folderId === null);
     }
@@ -28,7 +39,7 @@ export default function FavoritesPage() {
 
   const currentFolderName = useMemo(() => {
     if (!folderIdParam) return "すべて";
-    if (folderIdParam === "null") return "未分類";
+    if (folderIdParam === "null") return "デフォルト";
     const folder = folders.find((f) => f.id === parseInt(folderIdParam));
     return folder ? folder.name : "不明なフォルダ";
   }, [folders, folderIdParam]);
