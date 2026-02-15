@@ -1,6 +1,8 @@
 "use client";
 
+import { FavoriteButton } from "@/components/favorite-button";
 import { Button } from "@/components/ui/button";
+import { useFavorites } from "@/hooks/use-favorites";
 import { Paper } from "@/lib/types";
 import { useState } from "react";
 
@@ -30,6 +32,20 @@ export function PapersTable({
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(
     new Set()
   );
+
+  const {
+    favoritePaperIds,
+    favorites,
+    folders,
+    addFavorite,
+    removeFavoriteByPaperId,
+    createFolder,
+  } = useFavorites();
+
+  const getFolderId = (paperId: number) => {
+    const fav = favorites.find((f) => f.paperId === paperId);
+    return fav ? fav.folderId : null;
+  };
 
   const toggleAbstract = (id: number) => {
     setExpandedAbstracts((prev) => {
@@ -74,6 +90,9 @@ export function PapersTable({
                     </div>
                   </th>
                 )}
+                <th className="px-4 py-3 text-left w-10">
+                  {/* Favorite Column */}
+                </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
                   論文タイトル
                 </th>
@@ -115,6 +134,17 @@ export function PapersTable({
                       />
                     </td>
                   )}
+                  <td className="px-4 py-4 align-middle w-10">
+                    <FavoriteButton
+                      paperId={paper.id}
+                      isFavorited={favoritePaperIds.has(paper.id)}
+                      folders={folders}
+                      currentFolderId={getFolderId(paper.id)}
+                      onFavorite={addFavorite}
+                      onRemove={removeFavoriteByPaperId}
+                      onCreateFolder={createFolder}
+                    />
+                  </td>
                   <td className="px-4 py-4">
                     <a
                       href={paper.url.startsWith("http") ? paper.url : "#"}
