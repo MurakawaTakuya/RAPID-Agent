@@ -63,10 +63,19 @@ SEARCH_SYSTEM_INSTRUCTION = """
 
 
 
-def init_genai_client():
-    """Initialize GenAI client for Vertex AI (Cloud Run)"""
+# Gemini-3 Flash PreviewはGlobalでのみ使用可能(2.5-flashなら近辺のリージョンでOK)
+LLM_LOCATION = "global"
+
+
+def init_genai_client(location_override: str | None = None):
+    """Initialize GenAI client for Vertex AI (Cloud Run)
+    
+    Args:
+        location_override: If provided, use this location instead of
+                           the GOOGLE_CLOUD_LOCATION environment variable.
+    """
     project = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    location = os.environ.get("GOOGLE_CLOUD_LOCATION")
+    location = location_override or os.environ.get("GOOGLE_CLOUD_LOCATION")
     
     if not project or not location:
         message = "GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_LOCATION is not set. These are required for Vertex AI initialization."
@@ -307,7 +316,7 @@ def suggest_categorization():
     log_structured("INFO", "Generating categorization suggestions", request_id=request_id, uid=uid, length=len(user_input), papers_count=len(papers))
 
     try:
-        client = init_genai_client()
+        client = init_genai_client(location_override=LLM_LOCATION)
         suggestions = llm_suggest_categorization(client, user_input, papers)
         return jsonify(suggestions)
     except Exception as e:
