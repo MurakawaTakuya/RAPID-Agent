@@ -57,6 +57,7 @@ interface NavItem {
   icon?: LucideIcon;
   isActive?: boolean;
   folderId?: number;
+  className?: string;
   items?: {
     title: string;
     url: string;
@@ -90,6 +91,7 @@ export function AppSidebar() {
     {
       title: "保存した論文",
       url: "#",
+      className: "mt-2",
       icon: Star,
       isActive: true,
       items: [
@@ -144,7 +146,10 @@ export function AppSidebar() {
               {navMain.map((item) => {
                 if (!item.items?.length) {
                   return (
-                    <SidebarMenuItem key={item.title}>
+                    <SidebarMenuItem
+                      key={item.title}
+                      className={item.className}
+                    >
                       <SidebarMenuButton asChild tooltip={item.title}>
                         <Link href={item.url}>
                           {item.icon && <item.icon />}
@@ -160,11 +165,14 @@ export function AppSidebar() {
                     key={item.title}
                     asChild
                     defaultOpen={item.isActive}
-                    className="group/collapsible"
+                    className={`group/collapsible ${item.className || ""}`}
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title}>
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          className="cursor-pointer"
+                        >
                           {item.icon && <item.icon />}
                           <span>{item.title}</span>
                           <ChevronsUpDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
