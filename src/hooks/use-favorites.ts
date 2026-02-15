@@ -51,7 +51,7 @@ export function useFavorites() {
 
   useEffect(() => {
     if (user) {
-      // setLoading(true); // Suppress lint by not calling it here, assuming initial true is enough
+      setLoading(true);
       Promise.all([fetchFavorites(), fetchFolders()]).finally(() =>
         setLoading(false)
       );
