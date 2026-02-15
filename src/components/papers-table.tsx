@@ -1,6 +1,8 @@
 "use client";
 
+import { FavoriteButton } from "@/components/favorite-button";
 import { Button } from "@/components/ui/button";
+import { useFavorites } from "@/hooks/use-favorites";
 import { Paper } from "@/lib/types";
 import { useState } from "react";
 
@@ -30,6 +32,17 @@ export function PapersTable({
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<number>>(
     new Set()
   );
+
+  const {
+    favoritePaperIds,
+    favorites, // used for getFolderId logic replacement helpers
+    folders,
+    removeFavoriteByPaperId,
+    createFolder,
+    toggleFolder,
+    getPaperFolderIds,
+    isPaperInDefault,
+  } = useFavorites();
 
   const toggleAbstract = (id: number) => {
     setExpandedAbstracts((prev) => {
@@ -74,13 +87,16 @@ export function PapersTable({
                     </div>
                   </th>
                 )}
+                <th className="px-2 py-3 text-left w-10 text-md font-medium text-muted-foreground whitespace-nowrap">
+                  保存
+                </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground w-1/4">
                   論文タイトル
                 </th>
                 <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground whitespace-nowrap w-32">
                   学会名・年
                 </th>
-                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground">
+                <th className="px-4 py-3 text-left text-md font-medium text-muted-foreground min-w-[350px]">
                   概要
                 </th>
                 {showSimilarity && (
@@ -115,6 +131,18 @@ export function PapersTable({
                       />
                     </td>
                   )}
+                  <td className="px-2 py-4 align-middle w-10">
+                    <FavoriteButton
+                      paperId={paper.id}
+                      isFavorited={favoritePaperIds.has(paper.id)}
+                      folders={folders}
+                      selectedFolderIds={getPaperFolderIds(paper.id)}
+                      isDefault={isPaperInDefault(paper.id)}
+                      onToggleFolder={toggleFolder}
+                      onRemove={removeFavoriteByPaperId}
+                      onCreateFolder={createFolder}
+                    />
+                  </td>
                   <td className="px-4 py-4">
                     <a
                       href={paper.url.startsWith("http") ? paper.url : "#"}

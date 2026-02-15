@@ -15,6 +15,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -72,8 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       await signInWithPopup(auth, googleProvider);
+      toast.success("ログインしました");
     } catch (error) {
       console.error("Google sign-in error:", error);
+      toast.error("ログインに失敗しました");
     }
   };
 
@@ -84,8 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       await firebaseSignOut(auth);
+      toast.success("ログアウトしました");
     } catch (error) {
       console.error("Sign-out error:", error);
+      toast.error("ログアウトに失敗しました");
     }
   };
 

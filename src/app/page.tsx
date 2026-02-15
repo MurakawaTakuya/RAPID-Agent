@@ -138,7 +138,7 @@ export default function Home() {
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center px-4 mb-5 sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b justify-between">
-        <div className="flex items-center gap-2 w-[120px]">
+        <div className="flex items-center gap-2 w-10 md:w-[120px]">
           <SidebarTrigger className="-ml-1" />
         </div>
 
@@ -146,7 +146,7 @@ export default function Home() {
           <SearchStepper currentStep={currentStep} />
         </div>
 
-        <div className="flex items-center justify-end gap-2 w-[120px]">
+        <div className="flex items-center justify-end gap-2 w-10 md:w-[120px]">
           <AnimatedThemeToggler />
         </div>
       </header>
@@ -227,7 +227,7 @@ export default function Home() {
               className="flex flex-col items-center gap-8 w-full max-w-7xl px-4"
             >
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold mt-3">
+                <h2 className="text-2xl font-bold mt-12 md:mt-3">
                   興味のある論文を検索しましょう
                 </h2>
                 <p className="text-muted-foreground">

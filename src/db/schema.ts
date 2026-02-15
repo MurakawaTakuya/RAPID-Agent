@@ -6,6 +6,7 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
   vector,
 } from "drizzle-orm/pg-core";
@@ -45,3 +46,41 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Paper = typeof papers.$inferSelect;
 export type NewPaper = typeof papers.$inferInsert;
+
+// フォルダテーブル
+export const folders = pgTable("folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id", { length: 128 }).notNull(), // User.id (Firebase UID)
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// お気に入りテーブル
+export const favorites = pgTable(
+  "favorites",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id", { length: 128 }).notNull(), // User.id (Firebase UID)
+    paperId: integer("paper_id")
+      .notNull()
+      .references(() => papers.id, { onDelete: "cascade" }),
+    folderId: integer("folder_id").references(() => folders.id, {
+      onDelete: "set null",
+    }), // Nullable (未分類など)
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("idx_favorites_user_id").on(table.userId),
+    folderIdIdx: index("idx_favorites_folder_id").on(table.folderId),
+    uniqueFavorite: uniqueIndex("unique_favorite_idx").on(
+      table.userId,
+      table.paperId,
+      sql`coalesce(${table.folderId}, -1)`
+    ),
+  })
+);
+
+export type Folder = typeof folders.$inferSelect;
+export type NewFolder = typeof folders.$inferInsert;
+export type Favorite = typeof favorites.$inferSelect;
+export type NewFavorite = typeof favorites.$inferInsert;
