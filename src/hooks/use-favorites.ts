@@ -376,34 +376,25 @@ export function useFavorites() {
       const newFolder = await createFolder(folderName);
       if (!newFolder) return false;
 
-      // 2. 全論文をフォルダに追加
+      // 2. 一括追加エンドポイントで全論文をフォルダに追加
       const token = await user.getIdToken();
-      const results = await Promise.all(
-        paperIds.map((paperId) =>
-          fetch("/api/favorites", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ paperId, folderId: newFolder.id }),
-          }).then((res) => res.ok)
-        )
-      );
+      const res = await fetch("/api/favorites/batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ paperIds, folderId: newFolder.id }),
+      });
 
-      const successCount = results.filter((r) => r).length;
-      await fetchFavorites();
-
-      if (successCount === paperIds.length) {
-        toast.success(
-          `${paperIds.length}件の論文を「${folderName}」に保存しました`
-        );
+      if (res.ok) {
+        const data = await res.json();
+        await fetchFavorites();
+        toast.success(`${data.added}件の論文を「${folderName}」に保存しました`);
         return true;
       } else {
-        toast.warning(
-          `${successCount}/${paperIds.length}件の論文を保存しました`
-        );
-        return successCount > 0;
+        toast.error("グループの保存に失敗しました");
+        return false;
       }
     } catch (error) {
       console.error("Failed to add group to folder:", error);
