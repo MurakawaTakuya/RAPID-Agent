@@ -7,6 +7,7 @@ import {
   Copy,
   Folder,
   History,
+  Inbox,
   LogOut,
   LucideIcon,
   Search,
@@ -121,7 +122,7 @@ export function AppSidebar() {
         {
           title: "デフォルト",
           url: "/favorites?folderId=null",
-          icon: Folder,
+          icon: Inbox,
         },
         ...folders.map((folder) => ({
           title: folder.name,
