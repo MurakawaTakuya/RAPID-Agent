@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Favorite, Folder, Paper } from "@/db/schema";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export type FavoriteWithPaper = Favorite & {
   paper: Paper;
@@ -109,6 +110,14 @@ export function useFavorites() {
         body: JSON.stringify({ paperId, folderId }),
       });
       if (res.ok) {
+        // Find folder name if folderId is provided
+        // Find folder name if folderId is provided
+        let folderName = "デフォルト";
+        if (folderId) {
+          const folder = folders.find((f) => f.id === folderId);
+          if (folder) folderName = folder.name;
+        }
+        toast.success(`「${folderName}」に保存しました`);
         await fetchFavorites(); // Refresh to get real data
         return true;
       }
@@ -171,16 +180,29 @@ export function useFavorites() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
+        // Find folder name if exists (using snapshot)
+        let folderName = "デフォルト";
+        const removedFavorite = previousFavorites.find(
+          (f) => f.id === favoriteId
+        );
+        if (removedFavorite?.folderId) {
+          const folder = folders.find((f) => f.id === removedFavorite.folderId);
+          if (folder) folderName = folder.name;
+        }
+
+        toast.success(`「${folderName}」から削除しました`);
         return true;
       }
       // Revert
       setFavorites(previousFavorites);
       setFavoritePaperIds(previousIds);
+      toast.error("削除に失敗しました");
       return false;
     } catch (error) {
       console.error("Failed to remove favorite:", error);
       setFavorites(previousFavorites);
       setFavoritePaperIds(previousIds);
+      toast.error("削除に失敗しました");
       return false;
     }
   };
@@ -239,16 +261,19 @@ export function useFavorites() {
       );
 
       if (results.every((r) => r)) {
+        toast.success("すべてのお気に入りから削除しました");
         return true;
       } else {
         // Partial failure? Revert all for safety or just re-fetch.
         await fetchFavorites();
+        toast.error("一部の削除に失敗しました");
         return false;
       }
     } catch (e) {
       console.error("Failed removeFavoriteByPaperId", e);
       setFavorites(previousFavorites);
       setFavoritePaperIds(previousIds);
+      toast.error("削除に失敗しました");
       return false;
     }
   };
