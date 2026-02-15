@@ -21,9 +21,23 @@ import { useFavorites } from "@/hooks/use-favorites";
 import { Paper } from "@/lib/types";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 export default function FavoritesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex bg-sidebar h-screen w-full items-center justify-center">
+          <Spinner className="h-8 w-8" />
+        </div>
+      }
+    >
+      <FavoritesContent />
+    </Suspense>
+  );
+}
+
+function FavoritesContent() {
   const { user, loading: authLoading } = useAuth();
   const {
     favorites,
