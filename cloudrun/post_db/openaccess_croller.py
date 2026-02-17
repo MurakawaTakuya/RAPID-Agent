@@ -128,8 +128,11 @@ def collect_papers_to_json(
         abst_urls = abst_urls[:max_abstract_count]
 
     for url in tqdm.tqdm(abst_urls):
-        paper = fetch_title_abstract(url, timeout=timeout)
-        papers.append({"title": paper.title, "abstract": paper.abstract, "url": paper.url})
+        try:
+            paper = fetch_title_abstract(url, timeout=timeout)
+            papers.append({"title": paper.title, "abstract": paper.abstract, "url": paper.url})
+        except Exception as e:
+            print(f"Error fetching {url}: {e}")
 
     if output_path is not None:
         with open(output_path, "w", encoding="utf-8") as f:
