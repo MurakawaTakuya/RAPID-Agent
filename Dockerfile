@@ -1,5 +1,5 @@
 # ベースイメージ
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 # 依存関係のインストール
 FROM base AS deps
